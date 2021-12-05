@@ -15,6 +15,7 @@ git submodule update --init --recursive
 
 #### 2. Install Python Dependencies
 ```bash
+conda config --append channels conda-forge
 conda create -n dgapn-env --file requirements.txt
 conda activate dgapn-env
 pip install crem==0.2.5
