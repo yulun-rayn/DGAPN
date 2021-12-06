@@ -1,5 +1,6 @@
 import os
 import gym
+import random
 import logging
 import numpy as np
 from rdkit import Chem
@@ -99,6 +100,9 @@ class Sampler(tmp.Process):
 
     def run(self):
         proc_name = self.name
+        pid = self.pid
+        torch.manual_seed(pid)
+
         while True:
             next_task = self.task_queue.get()
             signal = next_task()

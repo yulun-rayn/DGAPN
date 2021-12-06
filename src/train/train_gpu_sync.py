@@ -1,5 +1,6 @@
 import os
 import gym
+import random
 import logging
 import numpy as np
 from rdkit import Chem
@@ -82,6 +83,7 @@ class Sampler(mp.Process):
         ## (None, None, None, True):            dummy task
         ## (index, state, candidates, done):    trajectory id, molecule smiles, candidate smiles, trajectory status
         proc_name = self.name
+
         while True:
             next_task = self.task_queue.get()
             if next_task == None:
