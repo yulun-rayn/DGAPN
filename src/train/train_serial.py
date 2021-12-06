@@ -118,6 +118,8 @@ def train_serial(args, env, model):
             time_step = 0
             model.update(memory)
             memory.clear()
+            # save running model
+            save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
         writer.add_scalar("EpMainRew", main_reward, i_episode-1)
         rewbuffer_env.append(main_reward) # reward
@@ -137,9 +139,6 @@ def train_serial(args, env, model):
         if (i_episode-1) % args.save_interval == 0:
             save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
             deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
-
-        # save running model
-        save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
         # logging
         if i_episode % args.log_interval == 0:
