@@ -85,8 +85,10 @@ def get_dock_score(states, args=None):
                 #Prepare SMILES for conversion, convert to pdb
                 #my_mol = Chem.MolFromSmiles(smile)
                 my_mol_with_H=Chem.AddHs(my_mol)
-                AllChem.EmbedMolecule(my_mol_with_H)
-                AllChem.MMFFOptimizeMolecule(my_mol_with_H)
+                ret = AllChem.EmbedMolecule(my_mol_with_H)
+                if (ret == -1): raise Exception(f'Exception: AllChem.EmbedMolecule returned {ret}')
+                ret = AllChem.MMFFOptimizeMolecule(my_mol_with_H)
+                if (ret == -1): raise Exception(f'Exception: AllChem.MMFFOptimizeMolecule returned {ret}')
                 my_embedded_mol = Chem.RemoveHs(my_mol_with_H)
                 #print("Printing MolToPDBBlock:\n".format(Chem.MolToPDBBlock(my_embedded_mol))
             except:
