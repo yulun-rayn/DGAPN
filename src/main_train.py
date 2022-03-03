@@ -51,7 +51,7 @@ def read_args():
     add_arg('--max_episodes', type=int, default=50000)      # max training episodes
     add_arg('--max_timesteps', type=int, default=12)        # max timesteps in one episode
     add_arg('--update_timesteps', type=int, default=200)    # update policy every n timesteps
-    add_arg('--k_epochs', type=int, default=50)             # update policy for K epochs
+    add_arg('--k_epochs', type=int, default=30)             # update policy for K epochs
     add_arg('--eps_clip', type=float, default=0.2)          # clip parameter for PPO
     add_arg('--gamma', type=float, default=0.99)            # discount factor
     add_arg('--eta', type=float, default=0.01)              # relative weight for entropy loss

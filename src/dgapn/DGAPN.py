@@ -213,7 +213,7 @@ class DGAPN(nn.Module):
         for i in range(1, self.k_epochs+1):
             loss, baseline_loss = self.policy.update(states, candidates, actions, rewards, old_logprobs, old_values, batch_idx)
             rnd_loss = self.explore_critic.update(states_next)
-            if (i%10)==0:
+            if (i%5)==0:
                 logging.info("  {:3d}: Actor Loss: {:7.3f}, Critic Loss: {:7.3f}, RND Loss: {:7.3f}".format(i, loss, baseline_loss, rnd_loss))
 
     def get_dict(self):
