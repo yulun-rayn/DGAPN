@@ -19,7 +19,7 @@ def dgapn_rollout(save_path,
                     K,
                     max_rollout=20,
                     args=None):
-    device = torch.device("cpu") if args.use_cpu else torch.device(
+    device = torch.device("cpu") if not args or args.use_cpu else torch.device(
         'cuda:' + str(args.gpu) if torch.cuda.is_available() else "cpu")
 
     model.to_device(device)
@@ -98,7 +98,7 @@ def dgapn_rollout(save_path,
 def eval_dgapn(artifact_path, model, env, reward_type, N=120, K=1, args=None):
     # logging variables
     dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    save_path = os.path.join(artifact_path, dt + '_dgapn.csv')
+    save_path = os.path.join(artifact_path, (args.name if args else '') + '_' + dt + '_dgapn.csv')
 
     print("\nStarting dgapn eval...\n")
     avg_improvement = []

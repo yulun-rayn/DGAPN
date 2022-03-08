@@ -212,7 +212,7 @@ def train_gpu_async(args, env, model, manager):
     memory = Memory()
     log = Log()
     rewbuffer_env = deque(maxlen=100)
-    molbuffer_env = deque(maxlen=1000)
+    molbuffer_env = deque(maxlen=10000)
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:

@@ -71,7 +71,7 @@ def train_serial(args, env, model):
 
     memory = Memory()
     rewbuffer_env = deque(maxlen=100)
-    molbuffer_env = deque(maxlen=1000)
+    molbuffer_env = deque(maxlen=10000)
     # training loop
     for i_episode in range(1, args.max_episodes+1):
         if time_step == 0:
