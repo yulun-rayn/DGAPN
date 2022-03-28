@@ -8,7 +8,7 @@ This repository is the official implementation of Distilled Graph Attention Poli
 
 #### 1. Setting up the Repository
 ```bash
-git clone https://github.com/njchoma/DGAPN
+git clone https://github.com/yulun-rayn/DGAPN
 cd DGAPN
 git submodule update --init --recursive
 ```

@@ -72,9 +72,9 @@ def read_args():
     add_arg('--use_3d', action='store_true')
     add_arg('--gnn_nb_layers', type=int, default=3)         # number of gnn layers on top of the inherited layers
     add_arg('--gnn_nb_shared', type=int, default=2)         # number of shared layers for Q, K within the gnn layers
-    add_arg('--gnn_nb_hidden', type=int, default=256, help='hidden size of Graph Networks')
+    add_arg('--gnn_nb_hidden', type=int, default=256, help='hidden size of Graph Layers')
     add_arg('--enc_num_layers', type=int, default=3)
-    add_arg('--enc_num_hidden', type=int, default=256, help='hidden size of Encoding Networks')
+    add_arg('--enc_num_hidden', type=int, default=256, help='hidden size of Fully Connected Layers')
     add_arg('--enc_num_output', type=int, default=256)
     add_arg('--rnd_num_layers', type=int, default=1)
     add_arg('--rnd_num_hidden', type=int, default=256, help='hidden size of Random Networks')
