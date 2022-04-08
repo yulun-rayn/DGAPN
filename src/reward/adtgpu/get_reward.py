@@ -72,7 +72,7 @@ def get_dock_score(states, args=None):
                 if (ret == -1): raise Exception(f'Exception: AllChem.EmbedMolecule returned {ret}')
                 ret = AllChem.MMFFOptimizeMolecule(mol_with_H)
                 if (ret == -1): raise Exception(f'Exception: AllChem.MMFFOptimizeMolecule returned {ret}')
-                if(DEBUG): print("Printing MolToPDBBlock:\n".format(Chem.MolToPDBBlock(mols_with_H)))
+                if(DEBUG): print("Printing MolToPDBBlock:\n".format(Chem.MolToPDBBlock(mol_with_H)))
             except Exception as e:
                 print("SMILES error on filtering: {}".format(Chem.MolToSmiles(mol_with_H)))
                 print(e)
