@@ -165,7 +165,7 @@ def train_gpu_sync(args, env, model):
     memory = Memory()
     memories = [Memory() for _ in range(args.nb_procs)]
     rewbuffer_env = deque(maxlen=100)
-    molbuffer_env = deque(maxlen=1000)
+    molbuffer_env = deque(maxlen=10000)
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
@@ -301,7 +301,7 @@ def train_gpu_sync(args, env, model):
             save_DGAPN(model, os.path.join(save_dir, 'DGAPN_continuous_solved_{}.pt'.format('test')))
             break
 
-        # save every 500 episodes
+        # save every save_interval episodes
         if save_counter >= args.save_interval:
             save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
             deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))

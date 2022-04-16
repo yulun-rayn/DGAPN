@@ -71,15 +71,14 @@ def train_serial(args, env, model):
 
     memory = Memory()
     rewbuffer_env = deque(maxlen=100)
-    molbuffer_env = deque(maxlen=1000)
+    molbuffer_env = deque(maxlen=10000)
     # training loop
     for i_episode in range(1, args.max_episodes+1):
         if time_step == 0:
             logging.info("\n\ncollecting rollouts")
         state, candidates, done = env.reset()
 
-        for t in range(args.max_timesteps):
-            time_step += 1
+        for t in range(1, args.max_timesteps+1):
             # Running policy:
             state_emb, candidates_emb, action_logprob, action = model.select_action(
                 mols_to_pyg_batch(state, model.emb_3d, device=model.device),
@@ -93,7 +92,7 @@ def train_serial(args, env, model):
             state, candidates, done = env.step(action)
 
             reward = 0
-            if (t==(args.max_timesteps-1)) or done:
+            if (t==args.max_timesteps) or done:
                 main_reward = get_main_reward(state, reward_type=args.reward_type, args=args)[0]
                 reward = main_reward
                 running_main_reward += main_reward
@@ -111,6 +110,8 @@ def train_serial(args, env, model):
 
             if done:
                 break
+
+        time_step += t
 
         # update if it's time
         if time_step >= args.update_timesteps:
@@ -136,7 +137,7 @@ def train_serial(args, env, model):
             break
 
         # save every save_interval episodes
-        if (i_episode-1) % args.save_interval == 0:
+        if i_episode % args.save_interval == 0:
             save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
             deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
 

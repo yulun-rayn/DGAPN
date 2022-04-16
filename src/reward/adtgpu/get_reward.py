@@ -3,10 +3,18 @@ import re
 import sys
 import time
 import shutil
-import argparse
 import subprocess
 from rdkit import Chem
 from rdkit.Chem import AllChem
+
+########## Executable paths ##########
+
+# For exaLearn systems
+OBABEL_PATH = "/usr/bin/obabel"
+ADT_PATH = "/clusterfs/csdata/pkg/autodock-gpu/AutoDock-GPU/bin/autodock_gpu_64wi"
+# For Summit systems
+#OBABEL_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/manesh/BIN/openbabel/summit/build/bin/obabel"
+#ADT_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/gabrielgaz/Apps/summit/autoDockGPU2/bin/autodock_gpu_64wi"
 
 ########### Receptor Files ###########
 
@@ -36,9 +44,9 @@ def get_dock_score(states, args=None):
 
     #Setup paths
     if(args and args.obabel_path!=''): obabel_path=args.obabel_path
-    else: exit("Obabel path (--obabel_path) must be specified for Docking reward")
+    else: obabel_path=OBABEL_PATH
     if(args and args.adt_path!=''): adt_path=args.adt_path
-    else: exit("AutoDock-GPU path (--adt_path) must be specified for Docking reward")
+    else: adt_path=ADT_PATH
     if(args and args.receptor_file!=''): receptor_file="./src/reward/adtgpu/receptor/"+args.receptor_file
     else: receptor_file="./src/reward/adtgpu/receptor/"+RECEPTOR_FILE
     if(args and args.run_id!=''): run_dir="./src/reward/adtgpu/autodockgpu"+str(args.run_id)
@@ -107,7 +115,7 @@ def get_dock_score(states, args=None):
 
     #Step 3 - AutoDock-GPU
     #Setup (create list list files) and run AutoDock-GPU
-    pred_docking_score=[]
+    pred_dock_reward=[]
     if(len(ligs_list)>0 and not all(x==None for x in ligs_list)):
         #Get stub name of receptor and field file
         receptor_dir='/'.join(receptor_file.split('/')[:-1])
@@ -150,18 +158,18 @@ def get_dock_score(states, args=None):
                 lig_path=run_dir+ligands_dir+"/"+lig+".dlg"
                 if not os.path.exists(lig_path):
                     print("ERROR: No such file {}\nDocking score marked as 0.00".format(lig_path))
-                    pred_docking_score.append(0.00)
+                    pred_dock_reward.append(0.00)
                 else: 
                     grep_cmd = "grep -2 \"^Rank \" "+lig_path+" | head -5 | tail -1 | cut -d \'|\' -f2 | sed \'s/ //g\'"
                     grep_out=os.popen(grep_cmd).read()
-                    pred_docking_score.append(-float(grep_out.strip()))#negate dock score
+                    pred_dock_reward.append(-float(grep_out.strip()))#negate dock score
             else:#invalid SMILES
                 print("WARNING: lig=None.  Docking score marked as 0.00")
-                pred_docking_score.append(0.00)
+                pred_dock_reward.append(0.00)
     else:#ligs list is empty
         print("WARNING: ligs_list is empty or all None, zeroing all scores...")
         for s in range(0,sm_counter-1):
-            pred_docking_score.append(0.00)
+            pred_dock_reward.append(0.00)
 
     #Remove or move temporary files based on TMP_SAVE
     if (TMP_SAVE==1): 
@@ -170,5 +178,5 @@ def get_dock_score(states, args=None):
     elif (TMP_SAVE==2): shutil.move(run_dir, run_dir+"_tmpfiles/"+time.strftime("%Y%m%d-%H%M%S"))
     else: shutil.rmtree(run_dir, ignore_errors=True)
 
-    if(DEBUG): print("Reward Scores (-dock): {}".format(pred_docking_score))
-    return (pred_docking_score)
+    if(DEBUG): print("Reward Scores (-dock): {}".format(pred_dock_reward))
+    return (pred_dock_reward)

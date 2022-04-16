@@ -119,7 +119,7 @@ class Sampler(tmp.Process):
             state, candidates, done = self.env.reset()
 
             while self.sample_count.value < self.update_timesteps and self.episode_count.value < self.max_episodes:
-                for t in range(self.max_timesteps):
+                for t in range(1, self.max_timesteps+1):
                     # Running policy:
                     state_emb, candidates_emb, action_logprob, action = self.model.select_action(
                         mols_to_pyg_batch(state, self.model.emb_3d, device=self.model.device),
@@ -133,7 +133,7 @@ class Sampler(tmp.Process):
                     state, candidates, done = self.env.step(action)
 
                     reward = 0
-                    if (t==(self.max_timesteps-1)) or done:
+                    if (t==self.max_timesteps) or done:
                         main_reward = get_main_reward(state, reward_type=self.args.reward_type, args=self.args)[0]
                         reward = main_reward
                         done = True
@@ -151,10 +151,10 @@ class Sampler(tmp.Process):
                         break
 
                 with self.lock:
-                    self.sample_count.value += (t+1)
+                    self.sample_count.value += t
                     self.episode_count.value += 1
 
-                self.log.ep_lengths.append(t+1)
+                self.log.ep_lengths.append(t)
                 self.log.ep_rewards.append(sum(self.memory.rewards))
                 self.log.ep_main_rewards.append(main_reward)
                 self.log.ep_mols.append(Chem.MolToSmiles(state))
@@ -212,7 +212,7 @@ def train_gpu_async(args, env, model, manager):
     memory = Memory()
     log = Log()
     rewbuffer_env = deque(maxlen=100)
-    molbuffer_env = deque(maxlen=1000)
+    molbuffer_env = deque(maxlen=10000)
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
@@ -257,7 +257,7 @@ def train_gpu_async(args, env, model, manager):
             save_DGAPN(model, os.path.join(save_dir, 'DGAPN_continuous_solved_{}.pt'.format('test')))
             break
 
-        # save every 500 episodes
+        # save every save_interval episodes
         if save_counter >= args.save_interval:
             save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
             deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))

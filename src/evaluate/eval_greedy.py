@@ -55,7 +55,7 @@ def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
 def eval_greedy(artifact_path, env, reward_type, N=30, K=1, args=None):
     # logging variables
     dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    save_path = os.path.join(artifact_path, dt + '_greedy.csv')
+    save_path = os.path.join(artifact_path, (args.name if args else '') + '_' + dt + '_greedy.csv')
 
     print("\nStarting greedy...\n")
     avg_improvement = []

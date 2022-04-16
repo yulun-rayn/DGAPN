@@ -53,7 +53,7 @@ def penalized_logp(molecule):
     Float. The penalized logP value.
     """
     log_p = MolLogP(molecule)
-    sas_score = sascorer.calculateScore(molecule)
+    sa_score = sascorer.calculateScore(molecule)
     largest_ring_size = get_largest_ring_size(molecule)
     cycle_score = max(largest_ring_size - 6, 0)
-    return log_p - sas_score - cycle_score
+    return log_p - sa_score - cycle_score

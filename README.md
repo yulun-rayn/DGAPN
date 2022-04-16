@@ -6,9 +6,9 @@ This repository is the official implementation of Distilled Graph Attention Poli
 
 ## Requirements
 
-#### 1. Setting up the Repository
+#### 1. Set up the Repository
 ```bash
-git clone https://github.com/njchoma/DGAPN
+git clone https://github.com/yulun-rayn/DGAPN
 cd DGAPN
 git submodule update --init --recursive
 ```
@@ -29,7 +29,7 @@ pip install crem==0.2.5
 
 #### 4. Install Docking Software (if docking reward is desired)
 
-To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) and [Open Babel](https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html) need to be installed. After installations, change `OBABEL_PATH` and `ADT_PATH` in [the reward function](src/reward/adtgpu/get_reward.py) to the corresponding executable paths on your system.
+To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) ([**1.5**.3](https://github.com/ccsb-scripps/AutoDock-GPU/releases)) and [Open Babel](https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html) need to be installed. After installations, change `ADT_PATH` and `OBABEL_PATH` in [the reward function](src/reward/adtgpu/get_reward.py) to the corresponding executable paths on your system.
 
 [The provided resources](src/reward/adtgpu/receptor) are for docking in the catalytic site of NSP15. If docking against a new protein is desired, several input receptor files need to be generated, see [the sub-directory](src/reward/adtgpu) for more details.
 
@@ -46,6 +46,7 @@ A list of flags may be found in `main_train.sh` and `src/main_train.py` for expe
 
 If you wish to produce a pre-trained graph embedding model for DGAPN training, or just want to try out supervised learning with sGAT, check out `src/gnn_embed` for the submodule instructions (installation steps can be skipped if a DGAPN environment is already established).
 
+
 ## Evaluation
 
 After training a model, use `main_evaluate.sh` to produce and evaluate molecules. The flag `--model_path` should be modified to direct to a trained DGAPN model.
@@ -56,8 +57,10 @@ After training a model, use `main_evaluate.sh` to produce and evaluate molecules
 
 Molecules will be saved in the artifact directory (set via the `--artifact_path` flag in `main_evaluate.sh`) as a csv file, where each line contains a molecule's SMILES string and associated docking score.
 
+
 ## Pre-trained Models
 Trained DGAPN models on docking reward and samples of molecules in evaluation can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD/tree/master/artifact/dgapn).
+
 
 ## License
 

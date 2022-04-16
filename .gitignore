@@ -3,11 +3,9 @@
 .vscode
 commands
 module_check.py
-*PPO*.pth
 *.swp
 run*
 test_run*
-molecule_gen*
 *.DS_Store
 *.db
 *.db.gz

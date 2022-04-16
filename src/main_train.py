@@ -51,7 +51,7 @@ def read_args():
     add_arg('--max_episodes', type=int, default=50000)      # max training episodes
     add_arg('--max_timesteps', type=int, default=12)        # max timesteps in one episode
     add_arg('--update_timesteps', type=int, default=200)    # update policy every n timesteps
-    add_arg('--k_epochs', type=int, default=50)             # update policy for K epochs
+    add_arg('--k_epochs', type=int, default=30)             # update policy for K epochs
     add_arg('--eps_clip', type=float, default=0.2)          # clip parameter for PPO
     add_arg('--gamma', type=float, default=0.99)            # discount factor
     add_arg('--eta', type=float, default=0.01)              # relative weight for entropy loss
@@ -72,17 +72,17 @@ def read_args():
     add_arg('--use_3d', action='store_true')
     add_arg('--gnn_nb_layers', type=int, default=3)         # number of gnn layers on top of the inherited layers
     add_arg('--gnn_nb_shared', type=int, default=2)         # number of shared layers for Q, K within the gnn layers
-    add_arg('--gnn_nb_hidden', type=int, default=256, help='hidden size of Graph Networks')
+    add_arg('--gnn_nb_hidden', type=int, default=256, help='hidden size of Graph Layers')
     add_arg('--enc_num_layers', type=int, default=3)
-    add_arg('--enc_num_hidden', type=int, default=256, help='hidden size of Encoding Networks')
+    add_arg('--enc_num_hidden', type=int, default=256, help='hidden size of Fully Connected Layers for Policy Network')
     add_arg('--enc_num_output', type=int, default=256)
     add_arg('--rnd_num_layers', type=int, default=1)
-    add_arg('--rnd_num_hidden', type=int, default=256, help='hidden size of Random Networks')
+    add_arg('--rnd_num_hidden', type=int, default=256, help='hidden size of Fully Connected Layers for Random Networks')
     add_arg('--rnd_num_output', type=int, default=8)
 
     # AUTODOCK PARAMETERS
-    add_arg('--obabel_path', default='')
     add_arg('--adt_path', default='')
+    add_arg('--obabel_path', default='')
     add_arg('--receptor_file', default='')
 
     return parser.parse_args()
