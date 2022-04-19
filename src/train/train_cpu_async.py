@@ -106,7 +106,7 @@ class Sampler(mp.Process):
                     args.eta,
                     args.gamma,
                     args.eps_clip,
-                    args.k_epochs,
+                    args.update_epochs,
                     args.embed_state,
                     args.emb_nb_inherit,
                     args.input_size,

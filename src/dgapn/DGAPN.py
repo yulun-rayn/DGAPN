@@ -22,7 +22,7 @@ def init_DGAPN(state):
                 state['eta'],
                 state['gamma'],
                 state['eps_clip'],
-                state['k_epochs'],
+                state['update_epochs'],
                 state['emb_state'],
                 state['emb_nb_inherit'],
                 state['input_dim'],
@@ -59,7 +59,7 @@ class DGAPN(nn.Module):
                  eta,
                  gamma,
                  eps_clip,
-                 k_epochs,
+                 update_epochs,
                  emb_state,
                  emb_nb_inherit,
                  input_dim,
@@ -91,7 +91,7 @@ class DGAPN(nn.Module):
         self.eta=eta
         self.gamma=gamma
         self.eps_clip=eps_clip
-        self.k_epochs=k_epochs
+        self.update_epochs=update_epochs
         self.emb_state=emb_state
         self.emb_nb_inherit=emb_nb_inherit
         self.input_dim=input_dim
@@ -177,18 +177,6 @@ class DGAPN(nn.Module):
         return scores.squeeze().tolist()
 
     def update(self, memory):
-        # Monte Carlo estimate of rewards:
-        rewards = []
-        discounted_reward = 0
-        for reward, terminal in zip(reversed(memory.rewards), reversed(memory.terminals)):
-            if terminal:
-                discounted_reward = 0
-            discounted_reward = reward + (self.gamma * discounted_reward)
-            rewards.insert(0, discounted_reward)
-
-        # Normalizing the rewards:
-        rewards = torch.tensor(rewards).to(self.device)
-
         # candidates batch
         batch_idx = []
         for i, cands in enumerate(memory.candidates):
@@ -203,18 +191,26 @@ class DGAPN(nn.Module):
         candidates = [Batch().from_data_list([item[i] for sublist in memory.candidates for item in sublist]).to(self.device)
                         for i in range(1+self.use_3d)]
         actions = torch.tensor(memory.actions).to(self.device)
+        rewards = torch.tensor(memory.rewards).to(self.device)
+        discounts = self.gamma * ~torch.tensor(memory.terminals).to(self.device)
 
         old_logprobs = torch.tensor(memory.logprobs).to(self.device)
-        old_values = self.policy.get_value(states)
 
-        # Optimize policy for k epochs:
+        # optimize
         logging.info("Optimizing...")
 
-        for i in range(1, self.k_epochs+1):
-            loss, baseline_loss = self.policy.update(states, candidates, actions, rewards, old_logprobs, old_values, batch_idx)
-            rnd_loss = self.explore_critic.update(states_next)
+        for i in range(1, self.update_epochs+1):
+            critic_loss = self.policy.update_critic(states, states_next, rewards, discounts)
             if (i%5)==0:
-                logging.info("  {:3d}: Actor Loss: {:7.3f}, Critic Loss: {:7.3f}, RND Loss: {:7.3f}".format(i, loss, baseline_loss, rnd_loss))
+                logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
+        for i in range(1, self.update_epochs+1):
+            actor_loss = self.policy.update_actor(states, states_next, candidates, actions, rewards, discounts, old_logprobs, batch_idx)
+            if (i%5)==0:
+                logging.info("  {:3d}: Actor Loss: {:7.3f}".format(i, actor_loss))
+        for i in range(1, self.update_epochs+1):
+            rnd_loss = self.explore_critic.update(states_next)
+            #if (i%5)==0:
+            #    logging.info("  {:3d}: RND Loss: {:7.3f}".format(i, rnd_loss))
 
     def get_dict(self):
         state = {'state_dict': self.state_dict(),
@@ -224,7 +220,7 @@ class DGAPN(nn.Module):
                     'eta': self.eta,
                     'gamma': self.gamma,
                     'eps_clip': self.eps_clip,
-                    'k_epochs': self.k_epochs,
+                    'update_epochs': self.update_epochs,
                     'emb_state': self.emb_state,
                     'emb_nb_inherit': self.emb_nb_inherit,
                     'input_dim': self.input_dim,
