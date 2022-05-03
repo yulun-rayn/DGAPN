@@ -29,7 +29,7 @@ pip install crem==0.2.5
 
 #### 4. Install Docking Software (if docking reward is desired)
 
-To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) ([**1.5**.3](https://github.com/ccsb-scripps/AutoDock-GPU/releases)) and [Open Babel](https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html) need to be installed. After installations, change `ADT_PATH` and `OBABEL_PATH` in [the reward function](src/reward/adtgpu/get_reward.py) to the corresponding executable paths on your system.
+To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) ([**1.5**.3](https://github.com/ccsb-scripps/AutoDock-GPU/releases)) and [Open Babel](https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html) need to be installed. After installations, change `ADT_PATH` and `OBABEL_PATH` in [the reward function](src/reward/adtgpu/get_reward.py) to the corresponding executable paths on your system.  Note that as specified by requirements.txt we used rdkit Version 2021.03.1.
 
 [The provided resources](src/reward/adtgpu/receptor) are for docking in the catalytic site of NSP15. If docking against a new protein is desired, several input receptor files need to be generated, see [the sub-directory](src/reward/adtgpu) for more details.
 
