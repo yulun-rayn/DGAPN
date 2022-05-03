@@ -22,7 +22,9 @@ def init_DGAPN(state):
                 state['eta'],
                 state['gamma'],
                 state['eps_clip'],
-                state['update_epochs'],
+                state['actor_epochs'],
+                state['critic_epochs'],
+                state['rnd_epochs'],
                 state['emb_state'],
                 state['emb_nb_inherit'],
                 state['input_dim'],
@@ -59,7 +61,9 @@ class DGAPN(nn.Module):
                  eta,
                  gamma,
                  eps_clip,
-                 update_epochs,
+                 actor_epochs,
+                 critic_epochs,
+                 rnd_epochs,
                  emb_state,
                  emb_nb_inherit,
                  input_dim,
@@ -91,7 +95,9 @@ class DGAPN(nn.Module):
         self.eta=eta
         self.gamma=gamma
         self.eps_clip=eps_clip
-        self.update_epochs=update_epochs
+        self.actor_epochs=actor_epochs
+        self.critic_epochs=critic_epochs
+        self.rnd_epochs=rnd_epochs
         self.emb_state=emb_state
         self.emb_nb_inherit=emb_nb_inherit
         self.input_dim=input_dim
@@ -199,15 +205,15 @@ class DGAPN(nn.Module):
         # optimize
         logging.info("Optimizing...")
 
-        for i in range(1, self.update_epochs+1):
+        for i in range(1, self.critic_epochs+1):
             critic_loss = self.policy.update_critic(states, states_next, rewards, discounts)
             if (i%5)==0:
                 logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
-        for i in range(1, self.update_epochs+1):
+        for i in range(1, self.actor_epochs+1):
             actor_loss = self.policy.update_actor(states, states_next, candidates, actions, rewards, discounts, old_logprobs, batch_idx)
             if (i%5)==0:
                 logging.info("  {:3d}: Actor Loss: {:7.3f}".format(i, actor_loss))
-        for i in range(1, self.update_epochs+1):
+        for i in range(1, self.rnd_epochs+1):
             rnd_loss = self.explore_critic.update(states_next)
             #if (i%5)==0:
             #    logging.info("  {:3d}: RND Loss: {:7.3f}".format(i, rnd_loss))
@@ -220,7 +226,9 @@ class DGAPN(nn.Module):
                     'eta': self.eta,
                     'gamma': self.gamma,
                     'eps_clip': self.eps_clip,
-                    'update_epochs': self.update_epochs,
+                    'actor_epochs': self.actor_epochs,
+                    'critic_epochs': self.critic_epochs,
+                    'rnd_epochs': self.rnd_epochs,
                     'emb_state': self.emb_state,
                     'emb_nb_inherit': self.emb_nb_inherit,
                     'input_dim': self.input_dim,
