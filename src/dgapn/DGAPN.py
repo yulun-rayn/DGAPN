@@ -177,7 +177,7 @@ class DGAPN(nn.Module):
         return scores.squeeze().tolist()
 
     def update(self, memory):
-        # Monte Carlo estimate of rewards:
+        # Monte Carlo estimates of rewards
         rewards = []
         discounted_reward = 0
         for reward, terminal in zip(reversed(memory.rewards), reversed(memory.terminals)):
@@ -185,17 +185,15 @@ class DGAPN(nn.Module):
                 discounted_reward = 0
             discounted_reward = reward + (self.gamma * discounted_reward)
             rewards.insert(0, discounted_reward)
-
-        # Normalizing the rewards:
         rewards = torch.tensor(rewards).to(self.device)
 
-        # candidates batch
+        # batch index of candidates
         batch_idx = []
         for i, cands in enumerate(memory.candidates):
             batch_idx.extend([i]*len(cands))
         batch_idx = torch.LongTensor(batch_idx).to(self.device)
 
-        # convert list to tensor
+        # memory lists to tensors
         states = [Batch().from_data_list([state[i] for state in memory.states]).to(self.device) 
                     for i in range(1+self.use_3d)]
         states_next = [Batch().from_data_list([state_next[i] for state_next in memory.states_next]).to(self.device) 
@@ -207,7 +205,7 @@ class DGAPN(nn.Module):
         old_logprobs = torch.tensor(memory.logprobs).to(self.device)
         old_values = self.policy.get_value(states)
 
-        # Optimize policy for k epochs:
+        # model optimization
         logging.info("Optimizing...")
 
         for i in range(1, self.k_epochs+1):
