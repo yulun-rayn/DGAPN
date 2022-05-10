@@ -246,9 +246,11 @@ def train_gpu_sync(args, env, model):
                 i_episode += 1
                 running_reward += main_reward
                 running_main_reward += main_reward
-                writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
+
                 rewbuffer_env.append(main_reward)
                 molbuffer_env.append((states[idx], main_reward))
+
+                writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
                 writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
 
                 memories[idx].rewards.append(main_reward)
