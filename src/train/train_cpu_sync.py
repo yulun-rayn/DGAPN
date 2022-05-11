@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dgapn.DGAPN import DGAPN, save_DGAPN
 
-from reward.get_main_reward import get_main_reward
+from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
@@ -163,7 +163,7 @@ class Sampler(mp.Process):
 
                     reward = 0
                     if (t==self.max_timesteps) or done:
-                        main_reward = get_main_reward(state, reward_type=self.args.reward_type, args=self.args)[0]
+                        main_reward = get_reward(state, reward_type=self.args.reward_type, args=self.args)
                         reward = main_reward
                         done = True
                     if (self.args.iota > 0 and 

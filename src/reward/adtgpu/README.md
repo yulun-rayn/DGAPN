@@ -4,7 +4,7 @@ Our pipeline achieves high-throughput processing by taking advantage of the perf
 
 #### 1.  Receptor pre-processing
 
-#### 2.  Reward scores from molecular docking within DGAPN
+#### 2.  Molecular docking
 
 
 ## Installation
@@ -97,7 +97,7 @@ AutoGrid4, are inputs for AutoDock-GPU.
 
 ## Molecular docking within DGAPN
 
-In [the python script](get_reward.py), provide the path to Open Babel and AutoDock-GPU binaries:
+In [the python script](get_score.py), provide the path to Open Babel and AutoDock-GPU binaries:
 
 ```bash
 #Executable paths
@@ -114,21 +114,12 @@ RECEPTOR_FILE=\"\<NAME_OF_RECEPTOR>.pdbqt\"
 
 ## Summary of the AutoDock-GPU processing workflow
 
-#### 1.  Using RDKit, the chemical validity of the SMILES strings of the
-    > generated molecules is checked. If valid, the SMILES are converted
-    > into PDB, using the `Chem.MolToPDBBlock` module. Invalid
-    > SMILES are given a score of 0.0
+1.  Using RDKit, the chemical validity of the SMILES strings of the generated molecules is checked. If valid, the SMILES are converted into PDB, using the `Chem.MolToPDBBlock` module. Invalid SMILES are given a score of 0.
 
-#### 2.  PDB files are converted to PDBQT, using Open Babel. Both the PDB and
-    > PDBQT formats are temporarily saved in a `/ligands/`
-    > sub-directory, under the work directory
+2.  PDB files are converted to PDBQT, using Open Babel. Both the PDB and PDBQT formats are temporarily saved in a `/ligands/` sub-directory, under the work directory.
 
-#### 3.  A list of all PDBQT ligands to be evaluated is stored in a text file
-    > in the `/ligands/` sub-directory
+3.  A list of all PDBQT ligands to be evaluated is stored in a text file in the `/ligands/` sub-directory.
 
-#### 4.  Molecular docking is performed using AutoDock-GPU
+4.  Molecular docking is performed using AutoDock-GPU
 
-#### 5.  Output is parsed to fetch the docking scores, the negative of the
-    > docking score is returned for all SMILES as reward scores. The
-    > reward function for DGAPN (`get_dock_score`) is defined
-    > in `/src/reward/adtgpu/get_reward.py`
+5.  Output is parsed to fetch the docking scores. The scoring function for DGAPN (`get_dock_score`) is defined in `/src/reward/adtgpu/get_score.py`.

@@ -10,13 +10,15 @@ import sascorer
 
 def get_logp_score(states):
     if not isinstance(states, list):
-        states = [states]
-    return [MolLogP(state) for state in states]
+        return MolLogP(states)
+    else:
+        return [MolLogP(state) for state in states]
 
 def get_penalized_logp(states):
     if not isinstance(states, list):
-        states = [states]
-    return [penalized_logp(state) for state in states]
+        return penalized_logp(states)
+    else:
+        return [penalized_logp(state) for state in states]
 
 def get_largest_ring_size(molecule):
     """Calculates the largest ring size in the molecule.

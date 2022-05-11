@@ -30,11 +30,12 @@ def get_dock_score(states, args=None):
     #Tmp files to save 
     #  0 for none, 1 for last round, 2 for all
     TMP_SAVE=1
-    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in src.reward.adtgpu.get_reward.")
+    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in src/reward/adtgpu/get_score.")
 
-    #Ensure states input is list
+    is_list = 1
     if not isinstance(states, list):
         states = [states]
+        is_list = 0
     #Check for any failed translations
     num_nones = states.count(None)
     if num_nones > 0:
@@ -115,7 +116,7 @@ def get_dock_score(states, args=None):
 
     #Step 3 - AutoDock-GPU
     #Setup (create list list files) and run AutoDock-GPU
-    pred_dock_reward=[]
+    pred_dock_score=[]
     if(len(ligs_list)>0 and not all(x==None for x in ligs_list)):
         #Get stub name of receptor and field file
         receptor_dir='/'.join(receptor_file.split('/')[:-1])
@@ -158,18 +159,18 @@ def get_dock_score(states, args=None):
                 lig_path=run_dir+ligands_dir+"/"+lig+".dlg"
                 if not os.path.exists(lig_path):
                     print("ERROR: No such file {}\nDocking score marked as 0.00".format(lig_path))
-                    pred_dock_reward.append(0.00)
+                    pred_dock_score.append(0.00)
                 else: 
                     grep_cmd = "grep -2 \"^Rank \" "+lig_path+" | head -5 | tail -1 | cut -d \'|\' -f2 | sed \'s/ //g\'"
                     grep_out=os.popen(grep_cmd).read()
-                    pred_dock_reward.append(-float(grep_out.strip()))#negate dock score
+                    pred_dock_score.append(float(grep_out.strip()))
             else:#invalid SMILES
                 print("WARNING: lig=None.  Docking score marked as 0.00")
-                pred_dock_reward.append(0.00)
+                pred_dock_score.append(0.00)
     else:#ligs list is empty
         print("WARNING: ligs_list is empty or all None, zeroing all scores...")
         for s in range(0,sm_counter-1):
-            pred_dock_reward.append(0.00)
+            pred_dock_score.append(0.00)
 
     #Remove or move temporary files based on TMP_SAVE
     if (TMP_SAVE==1): 
@@ -178,5 +179,7 @@ def get_dock_score(states, args=None):
     elif (TMP_SAVE==2): shutil.move(run_dir, run_dir+"_tmpfiles/"+time.strftime("%Y%m%d-%H%M%S"))
     else: shutil.rmtree(run_dir, ignore_errors=True)
 
-    if(DEBUG): print("Reward Scores (-dock): {}".format(pred_dock_reward))
-    return (pred_dock_reward)
+    if(DEBUG): print("Docking Scores: {}".format(pred_dock_score))
+    if not is_list:
+        pred_dock_score = pred_dock_score[0]
+    return pred_dock_score

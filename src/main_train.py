@@ -40,7 +40,7 @@ def read_args():
     add_arg('--log_interval', type=int, default=20)         # print avg reward in the interval
     add_arg('--save_interval', type=int, default=400)       # save model in the interval
 
-    add_arg('--reward_type', type=str, default='plogp', help='logp;plogp;dock')
+    add_arg('--reward_type', type=str, default='plogp', help='logp;plogp;qed;sa;dock')
 
     add_arg('--iota', type=float, default=0.05, help='relative weight for innovation reward')
     add_arg('--innovation_reward_episode_delay', type=int, default=100)
