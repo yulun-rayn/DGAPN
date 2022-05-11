@@ -262,8 +262,10 @@ def train_cpu_async(args, env, model):
             running_length += log.ep_lengths[i]
             running_reward += log.ep_rewards[i]
             running_main_reward += log.ep_main_rewards[i]
+
             rewbuffer_env.append(log.ep_main_rewards[i])
             molbuffer_env.append(log.ep_mols[i])
+
             writer.add_scalar("EpMainRew", log.ep_main_rewards[i], i_episode - 1)
             writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
         log.clear()
@@ -295,9 +297,9 @@ def train_cpu_async(args, env, model):
             logging.info('Episode {} \t Avg length: {} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
                 i_episode, running_length/log_counter, running_reward/log_counter, running_main_reward/log_counter))
 
+            running_length = 0
             running_reward = 0
             running_main_reward = 0
-            running_length = 0
             log_counter = 0
 
         episode_count.value = 0
