@@ -182,7 +182,7 @@ class DGAPN(nn.Module):
         scores = self.explore_critic.get_score(states_next)
         return scores.squeeze().tolist()
 
-    def update(self, memory):
+    def update(self, memory, nb_prints=5):
         # Monte Carlo estimates of rewards
         rewards = []
         discounted_reward = 0
@@ -217,15 +217,15 @@ class DGAPN(nn.Module):
 
         for i in range(1, self.critic_epochs+1):
             critic_loss = self.policy.update_critic(states, states_next, rewards, discounts)
-            if (i%5)==0:
+            if (i % int(self.critic_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
         for i in range(1, self.actor_epochs+1):
             actor_loss = self.policy.update_actor(states, states_next, candidates, actions, rewards, discounts, old_logprobs, batch_idx)
-            if (i%5)==0:
+            if (i % int(self.actor_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Actor Loss: {:7.3f}".format(i, actor_loss))
         for i in range(1, self.rnd_epochs+1):
             rnd_loss = self.explore_critic.update(states_next)
-            #if (i%5)==0:
+            #if (i % int(self.rnd_epochs/nb_prints)) == 0:
             #    logging.info("  {:3d}: RND Loss: {:7.3f}".format(i, rnd_loss))
 
     def get_dict(self):
