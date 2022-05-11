@@ -219,8 +219,9 @@ class DGAPN(nn.Module):
             critic_loss = self.policy.update_critic(states, states_next, rewards, discounts)
             if (i % int(self.critic_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
+        advantages = rewards + discounts*self.policy.get_value(states_next) - self.policy.get_value(states)
         for i in range(1, self.actor_epochs+1):
-            actor_loss = self.policy.update_actor(states, states_next, candidates, actions, rewards, discounts, old_logprobs, batch_idx)
+            actor_loss = self.policy.update_actor(states, candidates, actions, advantages, old_logprobs, batch_idx)
             if (i % int(self.actor_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Actor Loss: {:7.3f}".format(i, actor_loss))
         for i in range(1, self.rnd_epochs+1):
