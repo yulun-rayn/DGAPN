@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dgapn.DGAPN import DGAPN, save_DGAPN
 
-from reward.get_main_reward import get_main_reward
+from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
@@ -235,7 +235,7 @@ def train_gpu_sync(args, env, model):
             nowdone_idx = [idx for idx in notdone_idx if idx in new_done_idx]
             stillnotdone_idx = [idx for idx in notdone_idx if idx in new_notdone_idx]
             if len(nowdone_idx) > 0:
-                main_rewards = get_main_reward(
+                main_rewards = get_reward(
                     [Chem.MolFromSmiles(states[idx]) for idx in nowdone_idx], reward_type=args.reward_type, args=args)
                 if not isinstance(main_rewards, list):
                     main_rewards = [main_rewards]
@@ -246,9 +246,11 @@ def train_gpu_sync(args, env, model):
                 i_episode += 1
                 running_reward += main_reward
                 running_main_reward += main_reward
-                writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
+
                 rewbuffer_env.append(main_reward)
                 molbuffer_env.append((states[idx], main_reward))
+
+                writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
                 writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
 
                 memories[idx].rewards.append(main_reward)

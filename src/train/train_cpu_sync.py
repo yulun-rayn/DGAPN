@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dgapn.DGAPN import DGAPN, save_DGAPN
 
-from reward.get_main_reward import get_main_reward
+from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
@@ -165,7 +165,7 @@ class Sampler(mp.Process):
 
                     reward = 0
                     if (t==self.max_timesteps) or done:
-                        main_reward = get_main_reward(state, reward_type=self.args.reward_type, args=self.args)[0]
+                        main_reward = get_reward(state, reward_type=self.args.reward_type, args=self.args)
                         reward = main_reward
                         done = True
                     if (self.args.iota > 0 and 
@@ -270,8 +270,10 @@ def train_cpu_sync(args, env, model):
             running_length += log.ep_lengths[i]
             running_reward += log.ep_rewards[i]
             running_main_reward += log.ep_main_rewards[i]
+
             rewbuffer_env.append(log.ep_main_rewards[i])
             molbuffer_env.append(log.ep_mols[i])
+
             writer.add_scalar("EpMainRew", log.ep_main_rewards[i], i_episode - 1)
             writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
         log.clear()
@@ -303,9 +305,9 @@ def train_cpu_sync(args, env, model):
             logging.info('Episode {} \t Avg length: {} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
                 i_episode, running_length/log_counter, running_reward/log_counter, running_main_reward/log_counter))
 
+            running_length = 0
             running_reward = 0
             running_main_reward = 0
-            running_length = 0
             log_counter = 0
 
         episode_count = 0

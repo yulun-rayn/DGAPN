@@ -6,13 +6,13 @@ from datetime import datetime
 
 from rdkit import Chem
 
-from reward.get_main_reward import get_main_reward
+from reward.get_reward import get_reward
 
 def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
     mol, mol_candidates, done = env.reset()
     mol_best = mol
 
-    new_rew = get_main_reward(mol, reward_type, args=args)[0]
+    new_rew = get_reward(mol, reward_type, args=args)
     start_rew = new_rew
     best_rew = new_rew
     steps_remaining = K
@@ -22,7 +22,7 @@ def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
                                              steps_remaining,
                                              new_rew))
         steps_remaining -= 1
-        next_rewards = get_main_reward(mol_candidates, reward_type, args=args)
+        next_rewards = get_reward(mol_candidates, reward_type, args=args)
 
         action = np.argmax(next_rewards)
 

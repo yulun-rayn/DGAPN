@@ -6,7 +6,7 @@ conda activate dgapn-env
 DATA=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
 PYARGS=""
-PYARGS="$PYARGS --name DGAPN_parallel_8_noemb_3d_iota"
+PYARGS="$PYARGS --name DGAPN_parallel_noemb_3d_iota"
 PYARGS="$PYARGS --run_id 000"
 PYARGS="$PYARGS --nb_procs 8"
 # PYARGS="$PYARGS --mode cpu_sync"

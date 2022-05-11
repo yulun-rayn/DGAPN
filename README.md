@@ -59,7 +59,7 @@ Molecules will be saved in the artifact directory (set via the `--artifact_path`
 
 
 ## Pre-trained Models
-Trained DGAPN models on docking reward and samples of molecules in evaluation can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD/tree/master/artifact/dgapn).
+Trained DGAPN model on docking reward and samples of molecules generated in evaluation can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD).
 
 
 ## License
