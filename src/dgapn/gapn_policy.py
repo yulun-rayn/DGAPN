@@ -97,9 +97,7 @@ class ActorCriticGAPN(nn.Module):
     def get_value(self, states):
         return self.critic.get_value(states)
 
-    def update_actor(self, states, candidates, actions, rewards, old_logprobs, batch_idx):
-        advantages = rewards - self.get_value(states)
-
+    def update_actor(self, states, candidates, actions, advantages, old_logprobs, batch_idx):
         loss = self.actor.loss(states, candidates, actions, advantages, old_logprobs, batch_idx)
 
         self.optimizer_actor.zero_grad()
