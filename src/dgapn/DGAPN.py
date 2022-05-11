@@ -22,7 +22,9 @@ def init_DGAPN(state):
                 state['eta'],
                 state['gamma'],
                 state['eps_clip'],
-                state['k_epochs'],
+                state['actor_epochs'],
+                state['critic_epochs'],
+                state['rnd_epochs'],
                 state['emb_state'],
                 state['emb_nb_inherit'],
                 state['input_dim'],
@@ -59,7 +61,9 @@ class DGAPN(nn.Module):
                  eta,
                  gamma,
                  eps_clip,
-                 k_epochs,
+                 actor_epochs,
+                 critic_epochs,
+                 rnd_epochs,
                  emb_state,
                  emb_nb_inherit,
                  input_dim,
@@ -91,7 +95,9 @@ class DGAPN(nn.Module):
         self.eta=eta
         self.gamma=gamma
         self.eps_clip=eps_clip
-        self.k_epochs=k_epochs
+        self.actor_epochs=actor_epochs
+        self.critic_epochs=critic_epochs
+        self.rnd_epochs=rnd_epochs
         self.emb_state=emb_state
         self.emb_nb_inherit=emb_nb_inherit
         self.input_dim=input_dim
@@ -176,7 +182,7 @@ class DGAPN(nn.Module):
         scores = self.explore_critic.get_score(states_next)
         return scores.squeeze().tolist()
 
-    def update(self, memory):
+    def update(self, memory, nb_prints=5):
         # Monte Carlo estimates of rewards
         rewards = []
         discounted_reward = 0
@@ -203,16 +209,22 @@ class DGAPN(nn.Module):
         actions = torch.tensor(memory.actions).to(self.device)
 
         old_logprobs = torch.tensor(memory.logprobs).to(self.device)
-        old_values = self.policy.get_value(states)
 
         # model optimization
         logging.info("Optimizing...")
 
-        for i in range(1, self.k_epochs+1):
-            loss, baseline_loss = self.policy.update(states, candidates, actions, rewards, old_logprobs, old_values, batch_idx)
+        for i in range(1, self.critic_epochs+1):
+            critic_loss = self.policy.update_critic(states, rewards)
+            #if (i % int(self.critic_epochs/nb_prints)) == 0:
+            #    logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
+        for i in range(1, self.actor_epochs+1):
+            actor_loss = self.policy.update_actor(states, candidates, actions, rewards, old_logprobs, batch_idx)
+            if (i % int(self.actor_epochs/nb_prints)) == 0:
+                logging.info("  {:3d}: Actor Loss: {:7.3f}".format(i, actor_loss))
+        for i in range(1, self.rnd_epochs+1):
             rnd_loss = self.explore_critic.update(states_next)
-            if (i%5)==0:
-                logging.info("  {:3d}: Actor Loss: {:7.3f}, Critic Loss: {:7.3f}, RND Loss: {:7.3f}".format(i, loss, baseline_loss, rnd_loss))
+            #if (i % int(self.rnd_epochs/nb_prints)) == 0:
+            #    logging.info("  {:3d}: RND Loss: {:7.3f}".format(i, rnd_loss))
 
     def get_dict(self):
         state = {'state_dict': self.state_dict(),
@@ -222,7 +234,9 @@ class DGAPN(nn.Module):
                     'eta': self.eta,
                     'gamma': self.gamma,
                     'eps_clip': self.eps_clip,
-                    'k_epochs': self.k_epochs,
+                    'actor_epochs': self.actor_epochs,
+                    'critic_epochs': self.critic_epochs,
+                    'rnd_epochs': self.rnd_epochs,
                     'emb_state': self.emb_state,
                     'emb_nb_inherit': self.emb_nb_inherit,
                     'input_dim': self.input_dim,
