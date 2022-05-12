@@ -121,7 +121,7 @@ class Sampler(mp.Process):
                         episode_count.value > self.args.innovation_reward_episode_delay and 
                         episode_count.value < self.args.innovation_reward_episode_cutoff):
                         inno_reward = self.model.get_inno_reward(mols_to_pyg_batch(state, self.model.emb_3d, device=self.model.device))
-                        reward += inno_reward
+                        reward += self.args.iota * inno_reward
 
                     # Saving rewards and terminals:
                     self.memory.rewards.append(reward)
