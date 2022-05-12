@@ -20,7 +20,7 @@ PYARGS="$PYARGS --reward_type dock" # options: logp, plogp, qed, sa, dock
 # PYARGS="$PYARGS --emb_nb_inherit 3"
 PYARGS="$PYARGS --gnn_nb_layers 3"
 PYARGS="$PYARGS --gnn_nb_shared 3"
-PYARGS="$PYARGS --iota 0.05"
+PYARGS="$PYARGS --iota 0.1"
 PYARGS="$PYARGS --use_3d"
 
 python src/main_train.py $PYARGS
