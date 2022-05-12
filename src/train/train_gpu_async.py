@@ -20,7 +20,7 @@ from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
-from utils.rl_utils import Memory, Log
+from utils.rl_utils import Memory, Log, Scheduler
 
 #####################################################
 #                     SUBPROCESS                    #
@@ -47,6 +47,8 @@ class Sampler(tmp.Process):
         self.memory = Memory()
         self.log = Log()
 
+        self.scheduler = Scheduler(args.innovation_reward_update_cutoff, args.iota, weight_main=False)
+
     def run(self):
         proc_name = self.name
         pid = self.pid
@@ -55,13 +57,13 @@ class Sampler(tmp.Process):
         self.args.run_id = self.args.run_id + proc_name
         while True:
             next_task = self.task_queue.get()
-            signal = next_task()
-            if signal is None:
+            if next_task is None:
                 # Poison pill means shutdown
                 print('%s: Exiting' % proc_name)
                 self.task_queue.task_done()
                 break
 
+            update_count = next_task
             self.memory.clear()
             self.log.clear()
 
@@ -85,13 +87,11 @@ class Sampler(tmp.Process):
                     reward = 0
                     if (t==self.max_timesteps) or done:
                         main_reward = get_reward(state, reward_type=self.args.reward_type, args=self.args)
-                        reward = main_reward
+                        reward = self.scheduler.main_weight(update_count) * main_reward
                         done = True
-                    if (self.args.iota > 0 and 
-                        self.episode_count.value > self.args.innovation_reward_episode_delay and 
-                        self.episode_count.value < self.args.innovation_reward_episode_cutoff):
+                    if (self.args.iota > 0 and update_count < self.args.innovation_reward_update_cutoff):
                         inno_reward = self.model.get_inno_reward(mols_to_pyg_batch(state, self.model.emb_3d, device=self.model.device))
-                        reward += self.args.iota * inno_reward
+                        reward += self.scheduler.guide_weight(update_count) * inno_reward
 
                     # Saving rewards and terminals:
                     self.memory.rewards.append(reward)
@@ -113,11 +113,13 @@ class Sampler(tmp.Process):
             self.task_queue.task_done()
         return
 
+'''
 class Task(object):
-    def __init__(self, signal=None):
-        self.signal = signal
+    def __init__(self, update_count):
+        self.update_count = update_count
     def __call__(self):
-        return self.signal
+        return self.update_count
+'''
 
 class Result(object):
     def __init__(self, memory, log):
@@ -152,6 +154,7 @@ def train_gpu_async(args, env, model, manager):
     initialize_logger(save_dir)
     logging.info(model)
 
+    update_count = 0
     save_counter = 0
     log_counter = 0
 
@@ -170,7 +173,7 @@ def train_gpu_async(args, env, model, manager):
         model.to_device(torch.device("cpu"))
         # Enqueue jobs
         for i in range(args.nb_procs):
-            tasks.put(Task("sample"))
+            tasks.put(update_count)
         # Wait for all of the tasks to finish
         tasks.join()
         # Start unpacking results
@@ -199,6 +202,7 @@ def train_gpu_async(args, env, model, manager):
         logging.info("\nupdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
+        update_count += 1
 
         save_counter += episode_count.value
         log_counter += episode_count.value
@@ -234,5 +238,5 @@ def train_gpu_async(args, env, model, manager):
     writer.close()
     # Add a poison pill for each process
     for i in range(args.nb_procs):
-        tasks.put(Task())
+        tasks.put(None)
     tasks.join()

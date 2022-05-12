@@ -20,7 +20,7 @@ from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
-from utils.rl_utils import Memory, Log
+from utils.rl_utils import Memory, Log, Scheduler
 
 #####################################################
 #                     SUBPROCESS                    #
@@ -124,6 +124,7 @@ def train_gpu_sync(args, env, model):
 
     sample_count = 0
     episode_count = 0
+    update_count = 0
     save_counter = 0
     log_counter = 0
 
@@ -135,6 +136,9 @@ def train_gpu_sync(args, env, model):
     memories = [Memory() for _ in range(args.nb_procs)]
     rewbuffer_env = deque(maxlen=100)
     molbuffer_env = deque(maxlen=10000)
+
+    scheduler = Scheduler(args.innovation_reward_update_cutoff, args.iota, weight_main=False)
+
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
@@ -211,9 +215,10 @@ def train_gpu_sync(args, env, model):
 
             for i, idx in enumerate(nowdone_idx):
                 main_reward = main_rewards[i]
+                weighted_main_reward = scheduler.main_weight(update_count) * main_reward
 
                 i_episode += 1
-                running_reward += main_reward
+                running_reward += weighted_main_reward
                 running_main_reward += main_reward
 
                 rewbuffer_env.append(main_reward)
@@ -222,7 +227,7 @@ def train_gpu_sync(args, env, model):
                 writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
                 writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
 
-                memories[idx].rewards.append(main_reward)
+                memories[idx].rewards.append(weighted_main_reward)
                 memories[idx].terminals.append(True)
             for idx in stillnotdone_idx:
                 running_reward += 0
@@ -230,9 +235,7 @@ def train_gpu_sync(args, env, model):
                 memories[idx].rewards.append(0)
                 memories[idx].terminals.append(False)
             # get innovation rewards
-            if (args.iota > 0 and 
-                i_episode > args.innovation_reward_episode_delay and 
-                i_episode < args.innovation_reward_episode_cutoff):
+            if (args.iota > 0 and update_count < args.innovation_reward_update_cutoff):
                 if len(notdone_idx) > 0:
                     inno_rewards = model.get_inno_reward(
                         mols_to_pyg_batch([Chem.MolFromSmiles(states[idx]) 
@@ -241,11 +244,12 @@ def train_gpu_sync(args, env, model):
                         inno_rewards = [inno_rewards]
 
                 for i, idx in enumerate(notdone_idx):
-                    inno_reward = args.iota * inno_rewards[i]
+                    inno_reward = inno_rewards[i]
+                    weighted_inno_reward = scheduler.guide_weight(update_count) * inno_reward
 
-                    running_reward += inno_reward
+                    running_reward += weighted_inno_reward
 
-                    memories[idx].rewards[-1] += inno_reward
+                    memories[idx].rewards[-1] += weighted_inno_reward
 
             sample_count += len(notdone_idx)
             episode_count += len(nowdone_idx)
@@ -262,6 +266,7 @@ def train_gpu_sync(args, env, model):
         logging.info("\nupdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
+        update_count += 1
 
         save_counter += episode_count
         log_counter += episode_count

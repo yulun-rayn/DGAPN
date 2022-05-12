@@ -42,18 +42,17 @@ def read_args():
 
     add_arg('--reward_type', type=str, default='plogp', help='logp;plogp;qed;sa;dock')
 
-    add_arg('--iota', type=float, default=0.05, help='relative weight for innovation reward')
-    add_arg('--innovation_reward_episode_delay', type=int, default=100)
-    add_arg('--innovation_reward_episode_cutoff', type=int, default=1000)
+    add_arg('--iota', type=float, default=0.1, help='relative weight for innovation reward')
+    add_arg('--innovation_reward_update_cutoff', type=int, default=50)
 
     # TRAINING PARAMETERS
     add_arg('--solved_reward', type=float, default=100)     # stop training if avg_reward > solved_reward
     add_arg('--max_episodes', type=int, default=50000)      # max training episodes
     add_arg('--max_timesteps', type=int, default=12)        # max timesteps in one episode
     add_arg('--update_timesteps', type=int, default=200)    # min timesteps in one update
-    add_arg('--actor_epochs', type=int, default=20)         # actor epochs in one update
+    add_arg('--actor_epochs', type=int, default=30)         # actor epochs in one update
     add_arg('--critic_epochs', type=int, default=40)        # critic epochs in one update
-    add_arg('--rnd_epochs', type=int, default=30)           # rnd epochs in one update
+    add_arg('--rnd_epochs', type=int, default=20)           # rnd epochs in one update
     add_arg('--eps_clip', type=float, default=0.2)          # clip parameter for PPO
     add_arg('--gamma', type=float, default=0.99)            # discount factor
     add_arg('--eta', type=float, default=0.01)              # relative weight for entropy loss

@@ -20,7 +20,7 @@ from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
-from utils.rl_utils import Memory, Log
+from utils.rl_utils import Memory, Log, Scheduler
 
 #####################################################
 #                     SUBPROCESS                    #
@@ -76,6 +76,8 @@ class Sampler(mp.Process):
         self.memory = Memory()
         self.log = Log()
 
+        self.scheduler = Scheduler(args.innovation_reward_update_cutoff, args.iota, weight_main=False)
+
     def run(self):
         proc_name = self.name
         pid = self.pid
@@ -90,7 +92,7 @@ class Sampler(mp.Process):
                 self.task_queue.task_done()
                 break
 
-            model_state = next_task()
+            update_count, model_state = next_task()
             self.model.load_state_dict(model_state)
             self.memory.clear()
             self.log.clear()
@@ -115,13 +117,11 @@ class Sampler(mp.Process):
                     reward = 0
                     if (t==self.max_timesteps) or done:
                         main_reward = get_reward(state, reward_type=self.args.reward_type, args=self.args)
-                        reward = main_reward
+                        reward = self.scheduler.main_weight(update_count) * main_reward
                         done = True
-                    if (self.args.iota > 0 and 
-                        episode_count.value > self.args.innovation_reward_episode_delay and 
-                        episode_count.value < self.args.innovation_reward_episode_cutoff):
+                    if (self.args.iota > 0 and update_count < self.args.innovation_reward_update_cutoff):
                         inno_reward = self.model.get_inno_reward(mols_to_pyg_batch(state, self.model.emb_3d, device=self.model.device))
-                        reward += self.args.iota * inno_reward
+                        reward += self.scheduler.guide_weight(update_count) * inno_reward
 
                     # Saving rewards and terminals:
                     self.memory.rewards.append(reward)
@@ -145,10 +145,13 @@ class Sampler(mp.Process):
         return
 
 class Task(object):
-    def __init__(self, model_state):
+    def __init__(self, update_count, model_state):
+        self.update_count = update_count
         self.model_state = model_state
     def __call__(self):
-        return self.model_state
+        return (self.update_count, self.model_state)
+    def __str__(self):
+        return '%d' % self.update_count
 
 class Result(object):
     def __init__(self, memory, log):
@@ -177,6 +180,7 @@ def train_cpu_async(args, env, model):
     initialize_logger(save_dir)
     logging.info(model)
 
+    update_count = 0
     save_counter = 0
     log_counter = 0
 
@@ -195,7 +199,7 @@ def train_cpu_async(args, env, model):
         model.to_device(torch.device("cpu"))
         # Enqueue jobs
         for i in range(args.nb_procs):
-            tasks.put(Task(model.state_dict()))
+            tasks.put(Task(update_count, model.state_dict()))
         # Wait for all of the tasks to finish
         tasks.join()
         # Start unpacking results
@@ -225,6 +229,7 @@ def train_cpu_async(args, env, model):
         logging.info("\nupdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
+        update_count += 1
 
         save_counter += episode_count.value
         log_counter += episode_count.value
