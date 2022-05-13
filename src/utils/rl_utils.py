@@ -65,6 +65,6 @@ class Scheduler(object):
 
     def guide_weight(self, episode):
         if episode < self.cutoff:
-            return (self.cutoff - episode)/self.cutoff
+            return self.coeff*(self.cutoff - episode)/self.cutoff
         else:
             return 0.
