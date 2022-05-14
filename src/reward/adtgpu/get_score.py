@@ -11,7 +11,7 @@ from rdkit.Chem import AllChem
 
 # For exaLearn systems
 OBABEL_PATH = "/usr/bin/obabel"
-ADT_PATH = "/clusterfs/csdata/pkg/autodock-gpu/AutoDock-GPU/bin/autodock_gpu_64wi"
+ADT_PATH = "/clusterfs/csdata/pkg/autodock-gpu-153/AutoDock-GPU/bin/autodock_gpu_64wi"
 # For Summit systems
 #OBABEL_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/manesh/BIN/openbabel/summit/build/bin/obabel"
 #ADT_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/gabrielgaz/Apps/summit/autoDockGPU2/bin/autodock_gpu_64wi"
@@ -30,7 +30,7 @@ def get_dock_score(states, args=None):
     #Tmp files to save 
     #  0 for none, 1 for last round, 2 for all
     TMP_SAVE=1
-    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in src/reward/adtgpu/get_score.")
+    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in src/reward/adtgpu/get_score.py.")
 
     is_list = 1
     if not isinstance(states, list):
