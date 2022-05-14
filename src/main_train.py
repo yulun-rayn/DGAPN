@@ -42,7 +42,7 @@ def read_args():
 
     add_arg('--reward_type', type=str, default='plogp', help='logp;plogp;qed;sa;dock')
 
-    add_arg('--iota', type=float, default=0.05, help='relative weight for innovation reward')
+    add_arg('--iota', type=float, default=0.1, help='relative weight for innovation reward')
     add_arg('--innovation_reward_episode_delay', type=int, default=100)
     add_arg('--innovation_reward_episode_cutoff', type=int, default=1000)
 
@@ -67,7 +67,7 @@ def read_args():
     # NETWORK PARAMETERS
     add_arg('--embed_model_url', default='')
     add_arg('--embed_model_path', default='')
-    add_arg('--emb_nb_inherit', type=int, default=2)         # number of layers to inherit from the embedding model
+    add_arg('--emb_nb_inherit', type=int, default=2)        # number of layers to inherit from the embedding model
 
     add_arg('--input_size', type=int, default=121)
     add_arg('--nb_edge_types', type=int, default=1)

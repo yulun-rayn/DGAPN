@@ -20,38 +20,7 @@ from reward.get_reward import get_reward
 
 from utils.general_utils import initialize_logger, close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
-
-#####################################################
-#                   HELPER MODULES                  #
-#####################################################
-
-class Memory:
-    def __init__(self):
-        self.states = []        # state representations: pyg graph
-        self.candidates = []    # next state (candidate) representations: pyg graph
-        self.states_next = []   # next state (chosen) representations: pyg graph
-        self.actions = []       # action index: long
-        self.logprobs = []      # action log probabilities: float
-        self.rewards = []       # rewards: float
-        self.terminals = []     # trajectory status: logical
-
-    def extend(self, memory):
-        self.states.extend(memory.states)
-        self.candidates.extend(memory.candidates)
-        self.states_next.extend(memory.states_next)
-        self.actions.extend(memory.actions)
-        self.logprobs.extend(memory.logprobs)
-        self.rewards.extend(memory.rewards)
-        self.terminals.extend(memory.terminals)
-
-    def clear(self):
-        del self.states[:]
-        del self.candidates[:]
-        del self.states_next[:]
-        del self.actions[:]
-        del self.logprobs[:]
-        del self.rewards[:]
-        del self.terminals[:]
+from utils.rl_utils import Memory, Log
 
 #####################################################
 #                     SUBPROCESS                    #
