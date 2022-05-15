@@ -97,9 +97,9 @@ class ActorCriticGAPN(nn.Module):
     def get_value(self, states):
         return self.critic.get_value(states)
 
-    def update(self, states, candidates, actions, rewards, old_logprobs, old_values, batch_idx):
+    def update(self, states, candidates, actions, rewards, advantages, old_logprobs, batch_idx):
         # Update actor
-        loss = self.actor.loss(states, candidates, actions, rewards, old_logprobs, old_values, batch_idx)
+        loss = self.actor.loss(states, candidates, actions, advantages, old_logprobs, batch_idx)
 
         self.optimizer_actor.zero_grad()
         loss.backward()
@@ -287,14 +287,13 @@ class GAPN_Actor(nn.Module):
         shifted_actions = actions + batch_shift
         return probs[shifted_actions]
 
-    def loss(self, states, candidates, actions, rewards, old_logprobs, old_values, batch_idx, eps=1e-5):
+    def loss(self, states, candidates, actions, advantages, old_logprobs, batch_idx, eps=1e-5):
         probs = self.evaluate(states, candidates, actions, batch_idx)
         logprobs = torch.log(probs)
         entropies = probs * logprobs
 
         # Finding the ratio (pi_theta / pi_theta_old):
         ratios = torch.exp(logprobs - old_logprobs)
-        advantages = rewards - old_values
         advantages = (advantages - advantages.mean()) / (advantages.std() + eps)
 
         surr1 = ratios * advantages

@@ -18,7 +18,7 @@ class CReM_Env(object):
                  nb_sample_crem = 16,
                  nb_cores = 1,
                  mode = 'mol'):
-        
+
         self.grow = True if warm_start_dataset is None else False
         if not self.grow:
             self.scores, self.smiles = preprocess.main(os.path.join(data_path, warm_start_dataset))
@@ -87,6 +87,6 @@ class CReM_Env(object):
         self.new_mols = [mol] + new_mols if include_current_state else new_mols
         mol_candidates = self.new_mols
 
-        if len(mol_candidates)==0:
+        if len(mol_candidates)==0: #if len(mol_candidates)==1:
             return None, True
         return mol_candidates, False

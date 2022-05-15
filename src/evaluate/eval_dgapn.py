@@ -45,7 +45,7 @@ def dgapn_rollout(save_path,
         if model.emb_model is not None:
             with torch.autograd.no_grad():
                 g_candidates = model.emb_model.get_embedding(g_candidates, n_layers=model.emb_nb_shared, return_3d=model.use_3d, aggr=False)
-        # next_rewards = get_reward(mol_candidates, reward_type, args=args)
+        #next_rewards = get_reward(mol_candidates, reward_type, args=args)
 
         with torch.autograd.no_grad():
             probs, _, _ = model.policy.actor(g, g_candidates, torch.zeros(len(mol_candidates), dtype=torch.long).to(device))

@@ -176,7 +176,7 @@ class DGAPN(nn.Module):
         scores = self.explore_critic.get_score(states_next)
         return scores.squeeze().tolist()
 
-    def update(self, memory):
+    def update(self, memory, nb_prints=5):
         # Monte Carlo estimates of rewards
         rewards = []
         discounted_reward = 0
@@ -203,15 +203,16 @@ class DGAPN(nn.Module):
         actions = torch.tensor(memory.actions).to(self.device)
 
         old_logprobs = torch.tensor(memory.logprobs).to(self.device)
-        old_values = self.policy.get_value(states)
+
+        advantages = rewards - self.policy.get_value(states)
 
         # model optimization
         logging.info("Optimizing...")
 
         for i in range(1, self.k_epochs+1):
-            loss, baseline_loss = self.policy.update(states, candidates, actions, rewards, old_logprobs, old_values, batch_idx)
+            loss, baseline_loss = self.policy.update(states, candidates, actions, rewards, advantages, old_logprobs, batch_idx)
             rnd_loss = self.explore_critic.update(states_next)
-            if (i%5)==0:
+            if (i % int(self.k_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Actor Loss: {:7.3f}, Critic Loss: {:7.3f}, RND Loss: {:7.3f}".format(i, loss, baseline_loss, rnd_loss))
 
     def get_dict(self):
