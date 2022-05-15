@@ -69,10 +69,10 @@ class Sampler(mp.Process):
             # print('%s: Working' % proc_name)
             if done:
                 self.timestep_count = 0
-                state, candidates, done = self.env.reset(return_type='smiles')
+                state, candidates, done = self.env.reset(reset_timestep=False, return_type='smiles')
             else:
                 self.timestep_count += 1
-                state, candidates, done = self.env.reset(state, return_type='smiles')
+                state, candidates, done = self.env.reset(state, reset_timestep=False, return_type='smiles')
                 if self.timestep_count >= self.max_timesteps:
                     done = True
 

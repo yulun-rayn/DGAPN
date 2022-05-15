@@ -105,7 +105,7 @@ class Sampler(tmp.Process):
                     self.episode_count.value += 1
 
                 self.log.ep_lengths.append(t)
-                self.log.ep_rewards.append(sum(self.memory.rewards))
+                self.log.ep_rewards.append(sum(self.memory.rewards[-t:]))
                 self.log.ep_main_rewards.append(main_reward)
                 self.log.ep_mols.append(Chem.MolToSmiles(state))
 
