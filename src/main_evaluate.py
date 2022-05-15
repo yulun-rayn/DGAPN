@@ -3,12 +3,12 @@ import argparse
 
 import torch
 
-from dgapn.DGAPN import init_DGAPN
-from utils.general_utils import load_model
-from environment.env import CReM_Env
-
 from evaluate.eval_dgapn import eval_dgapn
 from evaluate.eval_greedy import eval_greedy
+
+from dgapn.DGAPN import init_DGAPN
+
+from utils.general_utils import load_model
 
 def read_args():
     parser = argparse.ArgumentParser(
@@ -16,7 +16,7 @@ def read_args():
 
     add_arg = parser.add_argument
 
-    # EXPERIMENT PARAMETERS
+    # SETUP PARAMETERS
     add_arg('--data_path', required=True)
     add_arg('--warm_start_dataset', required=True)
     add_arg('--artifact_path', required=True)
@@ -47,18 +47,12 @@ def main():
     args = read_args()
     print("====args====\n", args)
 
-    env = CReM_Env(args.data_path,
-                args.warm_start_dataset,
-                nb_sample_crem = args.nb_sample_crem,
-                mode='mol')
-
     artifact_path = os.path.join(args.artifact_path, args.name)
     os.makedirs(artifact_path, exist_ok=True)
 
     if args.greedy is True:
         # Greedy
         eval_greedy(artifact_path,
-                    env,
                     args.reward_type,
                     N = args.nb_test,
                     K = args.nb_bad_steps,
@@ -70,7 +64,6 @@ def main():
         print(model)
         eval_dgapn(artifact_path,
                     model,
-                    env,
                     args.reward_type,
                     N = args.nb_test,
                     K = args.nb_bad_steps,

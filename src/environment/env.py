@@ -15,9 +15,10 @@ class CReM_Env(object):
     def __init__(self,
                  data_path,
                  warm_start_dataset = None,
-                 nb_sample_crem = 16,
-                 nb_cores = 1,
-                 mode = 'mol'):
+                 nb_sample_crem=16,
+                 nb_cores=1,
+                 max_timesteps=12,
+                 mode='mol'):
 
         self.grow = True if warm_start_dataset is None else False
         if not self.grow:
@@ -25,6 +26,7 @@ class CReM_Env(object):
 
         self.nb_sample_crem = nb_sample_crem
         self.nb_cores = nb_cores
+        self.max_timesteps = max_timesteps
         self.mode = mode
 
         _ = download_dataset(data_path,
@@ -34,10 +36,12 @@ class CReM_Env(object):
                                        DATASET_NAME+'.gz',
                                        DATASET_NAME)
 
+        self.timestep = 0
 
-    def reset(self, mol=None, include_current_state=True, return_type=None):
-        if return_type is None:
-            return_type = self.mode
+    def reset(self, mol=None, include_current_state=True, reset_timestep=True, return_type=None):
+        if reset_timestep:
+            self.timestep = 0
+
         if mol is None:
             if self.grow:
                 carbon = Chem.MolFromSmiles("C")
@@ -50,12 +54,19 @@ class CReM_Env(object):
                 mol = Chem.MolFromSmiles(self.smiles[idx])
         if isinstance(mol, str):
             mol = Chem.MolFromSmiles(mol)
+
+        if return_type is None:
+            return_type = self.mode
         return self.mol_to_candidates(mol, include_current_state, return_type)
 
     def step(self, action, include_current_state=True, return_type=None):
-        mol = self.new_mols[action]
-        return self.mol_to_candidates(mol, include_current_state, return_type)
+        self.timestep += 1
 
+        mol = self.new_mols[action]
+
+        if return_type is None:
+            return_type = self.mode
+        return self.mol_to_candidates(mol, include_current_state, return_type)
 
     def mol_to_candidates(self, mol, include_current_state, return_type):
         mol_candidates, done = self.get_crem_candidates(mol, include_current_state)
@@ -89,4 +100,7 @@ class CReM_Env(object):
 
         if len(mol_candidates)==0: #if len(mol_candidates)==1:
             return None, True
-        return mol_candidates, False
+        elif self.timestep >= self.max_timesteps:
+            return mol_candidates, True
+        else:
+            return mol_candidates, False
