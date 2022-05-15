@@ -5,9 +5,6 @@ import numpy as np
 from rdkit import Chem
 from collections import deque, OrderedDict
 
-import time
-from datetime import datetime
-
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
@@ -15,23 +12,15 @@ from dgapn.DGAPN import DGAPN, save_DGAPN
 
 from reward.get_reward import get_reward
 
-from utils.general_utils import initialize_logger, close_logger, deque_to_csv
+from utils.general_utils import close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
-from utils.rl_utils import Memory, Log, Scheduler
+from utils.rl_utils import Memory, Log
 
 #####################################################
 #                   TRAINING LOOP                   #
 #####################################################
 
-def train_serial(args, env, model):
-    # logging variables
-    dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    writer = SummaryWriter(log_dir=os.path.join(args.artifact_path, 'runs/' + args.name + '_' + dt))
-    save_dir = os.path.join(args.artifact_path, 'saves/' + args.name + '_' + dt)
-    os.makedirs(save_dir, exist_ok=True)
-    initialize_logger(save_dir)
-    logging.info(model)
-
+def train_serial(args, env, model, writer=None, save_dir=None):
     sample_count = 0
 
     running_length = 0
@@ -44,7 +33,7 @@ def train_serial(args, env, model):
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
-        logging.info("\n\ncollecting rollouts")
+        logging.info("\n\nCollecting rollouts")
         while sample_count < args.update_timesteps:
             state, candidates, done = env.reset()
 
@@ -89,32 +78,32 @@ def train_serial(args, env, model):
             rewbuffer_env.append(main_reward)
             molbuffer_env.append((Chem.MolToSmiles(state), main_reward))
 
-            # write to Tensorboard
-            writer.add_scalar("EpMainRew", main_reward, i_episode-1)
-            writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode-1)
+            if writer is not None:
+                # write to Tensorboard
+                writer.add_scalar("EpMainRew", main_reward, i_episode-1)
+                writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode-1)
 
         # update model
-        logging.info("\nupdating model @ episode %d..." % i_episode)
+        logging.info("\nUpdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
 
-        # stop training if avg_reward > solved_reward
-        if np.mean(rewbuffer_env) > args.solved_reward:
-            logging.info("########## Solved! ##########")
-            save_DGAPN(model, os.path.join(save_dir, 'DGAPN_continuous_solved_{}.pt'.format('test')))
-            break
+        if save_dir is not None:
+            # save if solved
+            if np.mean(rewbuffer_env) > args.solved_reward:
+                save_DGAPN(model, os.path.join(save_dir, 'solved_dgapn.pt'))
 
-        # save every save_interval episodes
-        if i_episode % args.save_interval == 0:
-            save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
-            deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
+            # save every save_interval episodes
+            if i_episode % args.save_interval == 0:
+                save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
+                deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
 
-        # save running model
-        save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
+            # save running model
+            save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
         # logging
         if i_episode % args.log_interval == 0:
-            logging.info('Episode {} \t Avg length: {} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
+            logging.info('Episode {} \t Avg length: {:4.2f} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
                 i_episode, running_length/args.log_interval, running_reward/args.log_interval, running_main_reward/args.log_interval))
 
             running_length = 0
@@ -122,6 +111,11 @@ def train_serial(args, env, model):
             running_main_reward = 0
 
         sample_count = 0
+
+        # stop training if average main reward > solved_reward
+        if np.mean(rewbuffer_env) > args.solved_reward:
+            logging.info("########## Solved! ##########")
+            break
 
     close_logger()
     writer.close()

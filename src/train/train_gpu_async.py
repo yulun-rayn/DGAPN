@@ -7,9 +7,6 @@ from rdkit import Chem
 from collections import deque, OrderedDict
 from copy import deepcopy
 
-import time
-from datetime import datetime
-
 import torch
 import torch.multiprocessing as tmp
 from torch.utils.tensorboard import SummaryWriter
@@ -18,7 +15,7 @@ from dgapn.DGAPN import DGAPN, save_DGAPN
 
 from reward.get_reward import get_reward
 
-from utils.general_utils import initialize_logger, close_logger, deque_to_csv
+from utils.general_utils import close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
 from utils.rl_utils import Memory, Log
 
@@ -58,14 +55,14 @@ class Sampler(tmp.Process):
             signal = next_task()
             if signal is None:
                 # Poison pill means shutdown
-                print('%s: Exiting' % proc_name)
+                print('%s: Exiting ' % proc_name)
                 self.task_queue.task_done()
                 break
 
             self.memory.clear()
             self.log.clear()
 
-            print('%s: Sampling' % proc_name)
+            print('%s: Sampling ' % proc_name)
             state, candidates, done = self.env.reset()
 
             while self.sample_count.value < self.update_timesteps and self.episode_count.value < self.max_episodes:
@@ -130,7 +127,7 @@ class Result(object):
 #                   TRAINING LOOP                   #
 #####################################################
 
-def train_gpu_async(args, env, model, manager):
+def train_gpu_async(args, env, model, manager, writer=None, save_dir=None):
     # initiate subprocesses
     lock = manager.Lock()
     tasks = manager.JoinableQueue()
@@ -143,14 +140,6 @@ def train_gpu_async(args, env, model, manager):
                 args.max_episodes, args.max_timesteps, args.update_timesteps) for i in range(args.nb_procs)]
     for w in workers:
         w.start()
-
-    # logging variables
-    dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    writer = SummaryWriter(log_dir=os.path.join(args.artifact_path, 'runs/' + args.name + '_' + dt))
-    save_dir = os.path.join(args.artifact_path, 'saves/' + args.name + '_' + dt)
-    os.makedirs(save_dir, exist_ok=True)
-    initialize_logger(save_dir)
-    logging.info(model)
 
     save_counter = 0
     log_counter = 0
@@ -166,7 +155,7 @@ def train_gpu_async(args, env, model, manager):
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
-        logging.info("\n\ncollecting rollouts")
+        logging.info("\n\nCollecting rollouts")
         model.to_device(torch.device("cpu"))
         # Enqueue jobs
         for i in range(args.nb_procs):
@@ -191,35 +180,36 @@ def train_gpu_async(args, env, model, manager):
             rewbuffer_env.append(log.ep_main_rewards[i])
             molbuffer_env.append(log.ep_mols[i])
 
-            writer.add_scalar("EpMainRew", log.ep_main_rewards[i], i_episode - 1)
-            writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
+            if writer is not None:
+                # write to Tensorboard
+                writer.add_scalar("EpMainRew", log.ep_main_rewards[i], i_episode - 1)
+                writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
         log.clear()
 
         # update model
-        logging.info("\nupdating model @ episode %d..." % i_episode)
+        logging.info("\nUpdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
 
         save_counter += episode_count.value
         log_counter += episode_count.value
 
-        # stop training if avg_reward > solved_reward
-        if np.mean(rewbuffer_env) > args.solved_reward:
-            logging.info("########## Solved! ##########")
-            save_DGAPN(model, os.path.join(save_dir, 'DGAPN_continuous_solved_{}.pt'.format('test')))
-            break
+        if save_dir is not None:
+            # save if solved
+            if np.mean(rewbuffer_env) > args.solved_reward:
+                save_DGAPN(model, os.path.join(save_dir, 'solved_dgapn.pt'))
 
-        # save every save_interval episodes
-        if save_counter >= args.save_interval:
-            save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
-            deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
-            save_counter = 0
+            # save every save_interval episodes
+            if save_counter >= args.save_interval:
+                save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
+                deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
+                save_counter = 0
 
-        # save running model
-        save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
+            # save running model
+            save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
         if log_counter >= args.log_interval:
-            logging.info('Episode {} \t Avg length: {} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
+            logging.info('Episode {} \t Avg length: {:4.2f} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
                 i_episode, running_length/log_counter, running_reward/log_counter, running_main_reward/log_counter))
 
             running_length = 0
@@ -229,6 +219,11 @@ def train_gpu_async(args, env, model, manager):
 
         episode_count.value = 0
         sample_count.value = 0
+
+        # stop training if average main reward > solved_reward
+        if np.mean(rewbuffer_env) > args.solved_reward:
+            logging.info("########## Solved! ##########")
+            break
 
     close_logger()
     writer.close()
