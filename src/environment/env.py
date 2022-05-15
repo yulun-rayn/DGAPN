@@ -98,7 +98,7 @@ class CReM_Env(object):
         self.new_mols = [mol] + new_mols if include_current_state else new_mols
         mol_candidates = self.new_mols
 
-        if len(mol_candidates)==0: #if len(mol_candidates)==1:
+        if len(mol_candidates)==0: #if len(mol_candidates)==include_current_state:
             return None, True
         elif self.timestep >= self.max_timesteps:
             return mol_candidates, True
