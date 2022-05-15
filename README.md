@@ -42,7 +42,7 @@ Once the conda environment is set up, the function call to train the DGAPN is:
 ./main_train.sh &
 ```
 
-A list of flags may be found in `main_train.sh` and `src/main_train.py` for experimentation with different network and training parameters (`--reward_type dock` only if docking software has been set up). The run log and models are saved under `*artifact_path*/saves`, and the tensorboard log is saved under `*artifact_path*/runs`.
+A list of flags may be found in `main_train.sh` and `src/main_train.py` for experimentation with different network and training parameters (`--reward_type dock` only if docking software has been set up; different `--run_id` if multiple docking tasks are running at the same time). The run log, models and generated molecules are saved under `*artifact_path*/saves`; the tensorboard log is saved under `*artifact_path*/runs`.
 
 If you wish to produce a pre-trained graph embedding model for DGAPN training, or just want to try out supervised learning with sGAT, check out `src/gnn_embed` for the submodule instructions (installation steps can be skipped if a DGAPN environment is already established).
 
@@ -55,7 +55,7 @@ After training a model, use `main_evaluate.sh` to produce and evaluate molecules
 ./main_evaluate.sh
 ```
 
-Molecules will be saved in the artifact directory (set via the `--artifact_path` flag in `main_evaluate.sh`) as a csv file, where each line contains a molecule's SMILES string and associated docking score.
+Generated molecules are saved under `*artifact_path*/*name*` as a csv file, where each line contains a molecule's SMILES string and associated score.
 
 
 ## Pre-trained Models
