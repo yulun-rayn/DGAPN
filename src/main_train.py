@@ -1,10 +1,13 @@
 import os
+import logging
 import argparse
 import resource
+from datetime import datetime
 
 import torch
 import multiprocessing as mp
 import torch.multiprocessing as tmp
+from torch.utils.tensorboard import SummaryWriter
 
 from train.train_serial import train_serial
 from train.train_cpu_sync import train_cpu_sync
@@ -16,7 +19,7 @@ from dgapn.DGAPN import DGAPN, load_DGAPN
 
 from environment.env import CReM_Env
 
-from utils.general_utils import load_model
+from utils.general_utils import initialize_logger, load_model
 
 def read_args():
     parser = argparse.ArgumentParser(
@@ -93,7 +96,16 @@ def read_args():
 
 if __name__ == '__main__':
     args = read_args()
-    print("====args====\n", args)
+
+    # logging variables
+    dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
+    writer = SummaryWriter(log_dir=os.path.join(args.artifact_path, 'runs/' + args.name + '_' + dt))
+    save_dir = os.path.join(args.artifact_path, 'saves/' + args.name + '_' + dt)
+    os.makedirs(save_dir, exist_ok=True)
+    initialize_logger(save_dir)
+
+    logging.info(args)
+    logging.info("")
 
     # Process
     #args.nb_procs = mp.cpu_count()
@@ -101,7 +113,6 @@ if __name__ == '__main__':
     # Optimizer
     args.lr = (args.actor_lr, args.critic_lr, args.rnd_lr)
     args.betas = (args.beta1, args.beta2)
-    print("lr:", args.lr, "beta:", args.betas, "eps:", args.eps)
 
     # Input
     embed_state = None
@@ -155,18 +166,19 @@ if __name__ == '__main__':
     args.device = torch.device("cpu") if args.use_cpu else torch.device(
         'cuda:' + str(args.gpu) if torch.cuda.is_available() else "cpu")
     model.to_device(args.device)
+    logging.info(model)
 
     # Training
     if args.nb_procs > 1:
         if args.mode == 'cpu_sync':
             mp.set_start_method('fork', force=True)
-            train_cpu_sync(args, env, model)
+            train_cpu_sync(args, env, model, writer, save_dir)
         elif args.mode == 'cpu_async':
             mp.set_start_method('fork', force=True)
-            train_cpu_async(args, env, model)
+            train_cpu_async(args, env, model, writer, save_dir)
         elif args.mode == 'gpu_sync':
             mp.set_start_method('fork', force=True)
-            train_gpu_sync(args, env, model)
+            train_gpu_sync(args, env, model, writer, save_dir)
         elif args.mode == 'gpu_async':
             rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
             resource.setrlimit(resource.RLIMIT_NOFILE, (10000, rlimit[1]))
@@ -175,8 +187,8 @@ if __name__ == '__main__':
             tmp.set_start_method('spawn', force=True)
             manager = mp.Manager()
             model.share_memory()
-            train_gpu_async(args, env, model, manager)
+            train_gpu_async(args, env, model, manager, writer, save_dir)
         else:
             raise ValueError("Mode not recognized.")
     else:
-        train_serial(args, env, model)
+        train_serial(args, env, model, writer, save_dir)

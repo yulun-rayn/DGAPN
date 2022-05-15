@@ -1,6 +1,6 @@
-# AutoDock-GPU implementation in the DGAPN framework
+# Docking metric for molecular generation tasks
 
-Our pipeline achieves high-throughput processing by taking advantage of the performance benefits of  [AutoDock-GPU](https://doi.org/10.26434/chemrxiv.9702389.v1) for structure-based molecular docking and calculation of the binding affinity of the putative protein-ligand complexes generated. The implementation in the DGAPN framework is done in two steps:
+Our pipeline achieves high-throughput processing by taking advantage of the performance benefits of  [AutoDock-GPU](https://doi.org/10.26434/chemrxiv.9702389.v1) for structure-based molecular docking and calculation of the binding affinity of the putative protein-ligand complexes generated. The implementation is done in two steps:
 
 #### 1.  Receptor pre-processing
 
@@ -16,8 +16,6 @@ Our pipeline achieves high-throughput processing by taking advantage of the perf
 -   AutoGrid4 (http://autodock.scripps.edu/wiki/AutoGrid)
 
 #### 2.  Install the software for molecular docking on Linux compute server
-    > along with DGAPN
-
 -   RDKit (https://www.rdkit.org/)
 
 -   Open Babel (https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html)
@@ -28,7 +26,7 @@ Our pipeline achieves high-throughput processing by taking advantage of the perf
 
 ## Receptor pre-processing
 
-DGAPN was tested for targeted docking, in which a functional binding
+Deep learning models were tested for targeted docking, in which a functional binding
 site is defined. Therefore, previous structural knowledge about the
 protein is needed to specify a search box that includes the side chains
 of amino acids forming the region of interest.
@@ -95,7 +93,7 @@ AutoGrid4, are inputs for AutoDock-GPU.
 > AutoDock atom types of the receptor.
 
 
-## Molecular docking within DGAPN
+## Molecular docking score
 
 In [the python script](get_score.py), provide the path to Open Babel and AutoDock-GPU binaries:
 
@@ -122,4 +120,4 @@ RECEPTOR_FILE=\"\<NAME_OF_RECEPTOR>.pdbqt\"
 
 4.  Molecular docking is performed using AutoDock-GPU
 
-5.  Output is parsed to fetch the docking scores. The scoring function for DGAPN (`get_dock_score`) is defined in `/src/reward/adtgpu/get_score.py`.
+5.  Output is parsed to fetch the docking scores. The scoring function (`get_dock_score`) is defined in `/src/reward/adtgpu/get_score.py`.
