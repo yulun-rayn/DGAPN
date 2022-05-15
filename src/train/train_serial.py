@@ -22,6 +22,9 @@ from utils.rl_utils import Memory, Log
 
 def train_serial(args, env, model, writer=None, save_dir=None):
     sample_count = 0
+    episode_count = 0
+    save_counter = 0
+    log_counter = 0
 
     running_length = 0
     running_reward = 0
@@ -70,7 +73,7 @@ def train_serial(args, env, model, writer=None, save_dir=None):
                     break
 
             sample_count += t
-            i_episode += 1
+            episode_count += 1
 
             running_length += t
             running_main_reward += main_reward
@@ -83,6 +86,10 @@ def train_serial(args, env, model, writer=None, save_dir=None):
                 writer.add_scalar("EpMainRew", main_reward, i_episode-1)
                 writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode-1)
 
+        i_episode += episode_count
+        save_counter += episode_count
+        log_counter += episode_count
+
         # update model
         logging.info("\nUpdating model @ episode %d..." % i_episode)
         model.update(memory)
@@ -94,23 +101,25 @@ def train_serial(args, env, model, writer=None, save_dir=None):
                 save_DGAPN(model, os.path.join(save_dir, 'solved_dgapn.pt'))
 
             # save every save_interval episodes
-            if i_episode % args.save_interval == 0:
+            if save_counter >= args.save_interval:
                 save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
                 deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
+                save_counter = 0
 
             # save running model
             save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
-        # logging
-        if i_episode % args.log_interval == 0:
+        if log_counter >= args.log_interval:
             logging.info('Episode {} \t Avg length: {:4.2f} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
-                i_episode, running_length/args.log_interval, running_reward/args.log_interval, running_main_reward/args.log_interval))
+                i_episode, running_length/log_counter, running_reward/log_counter, running_main_reward/log_counter))
 
             running_length = 0
             running_reward = 0
             running_main_reward = 0
+            log_counter = 0
 
         sample_count = 0
+        episode_count = 0
 
         # stop training if average main reward > solved_reward
         if np.mean(rewbuffer_env) > args.solved_reward:
