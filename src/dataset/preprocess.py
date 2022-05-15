@@ -14,7 +14,7 @@ def read_2col(reader):
     all_score = []
     all_smiles = []
     for i, (score, smiles) in enumerate (reader):
-        #Some fields are empty, if logp is empty it will be caught by the exception. If smile is empty, conditional kicks in.
+        # Some fields are empty, if score is empty it will be caught by the exception. If smile is empty, conditional kicks in.
         try:
             if smiles is not None:
                 all_score.append(float(score))

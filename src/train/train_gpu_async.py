@@ -119,6 +119,8 @@ class Task(object):
         self.update_count = update_count
     def __call__(self):
         return self.update_count
+    def __str__(self):
+        return '%d' % self.update_count
 '''
 
 class Result(object):

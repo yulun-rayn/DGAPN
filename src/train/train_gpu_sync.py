@@ -155,9 +155,12 @@ def train_gpu_sync(args, env, model):
 
             states[index] = state
 
-            notdone_idx.append(index)
-            candidates.append(cands)
-            batch_idx.extend([index] * len(cands))
+            if done:
+                done_idx.append(index)
+            else:
+                notdone_idx.append(index)
+                candidates.append(cands)
+                batch_idx.extend([index] * len(cands))
         while True:
             # action selections (for not done)
             if len(notdone_idx) > 0:

@@ -8,7 +8,19 @@ from rdkit import Chem
 
 from reward.get_reward import get_reward
 
-def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
+from environment.env import CReM_Env
+
+def greedy_rollout(save_path,
+                    reward_type,
+                    K,
+                    max_rollout=6,
+                    args=None):
+    env = CReM_Env(args.data_path,
+                args.warm_start_dataset,
+                nb_sample_crem=args.nb_sample_crem,
+                max_timesteps=max_rollout,
+                mode='mol')
+
     mol, mol_candidates, done = env.reset()
     mol_best = mol
 
@@ -16,11 +28,9 @@ def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
     start_rew = new_rew
     best_rew = new_rew
     steps_remaining = K
+    print(" Initial Reward: {:4.2f}".format(start_rew))
 
-    for i in range(max_rollout):
-        print("  {:3d} {:2d} {:4.1f}".format(i+1,
-                                             steps_remaining,
-                                             new_rew))
+    for t in range(1, max_rollout+1):
         steps_remaining -= 1
         next_rewards = get_reward(mol_candidates, reward_type, args=args)
 
@@ -39,20 +49,18 @@ def greedy_rollout(save_path, env, reward_type, K, max_rollout=6, args=None):
             best_rew = new_rew
             steps_remaining = K
 
+        print("  Step {:3d}: Best Reward: {:4.2f} Bad Steps: {:2d}".format(t, best_rew, K-steps_remaining))
         if (steps_remaining == 0) or done:
             break
 
+    smile_best = Chem.MolToSmiles(mol_best, isomericSmiles=False)
     with open(save_path, 'a') as f:
-        print("Writing SMILE molecules!")
-
-        smile = Chem.MolToSmiles(mol_best, isomericSmiles=False)
-        print(smile, new_rew)
         row = ''.join(['{},'] * 2)[:-1] + '\n'
-        f.write(row.format(smile, new_rew))
+        f.write(row.format(smile_best, best_rew))
 
     return start_rew, best_rew
 
-def eval_greedy(artifact_path, env, reward_type, N=30, K=1, args=None):
+def eval_greedy(artifact_path, reward_type, N=30, K=1, args=None):
     # logging variables
     dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
     save_path = os.path.join(artifact_path, (args.name if args else '') + '_' + dt + '_greedy.csv')
@@ -60,10 +68,14 @@ def eval_greedy(artifact_path, env, reward_type, N=30, K=1, args=None):
     print("\nStarting greedy...\n")
     avg_improvement = []
     avg_best = []
-    for i in range(N):
-        start_rew, best_rew = greedy_rollout(save_path, env, reward_type, K, args=args)
+    for i in range(1, N+1):
+        start_rew, best_rew = greedy_rollout(save_path,
+                                             reward_type,
+                                             K,
+                                             args=args)
         improvement = best_rew - start_rew
-        print("{:2d}: {:4.1f} {:4.1f} {:4.1f}\n".format(i+1,
+        print("Episode {:2d}: Initial Reward: {:4.2f} Best Reward: {:4.2f} Improvement: {:4.2f}\n".format(
+                                                      i,
                                                       start_rew,
                                                       best_rew,
                                                       improvement))

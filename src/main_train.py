@@ -14,9 +14,9 @@ from train.train_gpu_async import train_gpu_async
 
 from dgapn.DGAPN import DGAPN, load_DGAPN
 
-from utils.general_utils import load_model
-
 from environment.env import CReM_Env
+
+from utils.general_utils import load_model
 
 def read_args():
     parser = argparse.ArgumentParser(
@@ -24,7 +24,7 @@ def read_args():
 
     add_arg = parser.add_argument
 
-    # EXPERIMENT PARAMETERS
+    # SETUP PARAMETERS
     add_arg('--data_path', required=True)
     add_arg('--artifact_path', required=True)
     add_arg('--name', default='default_run')
@@ -42,13 +42,14 @@ def read_args():
 
     add_arg('--reward_type', type=str, default='plogp', help='logp;plogp;qed;sa;dock')
 
+    # TRAINING PARAMETERS
     add_arg('--iota', type=float, default=0.1, help='relative weight for innovation reward')
     add_arg('--innovation_reward_update_cutoff', type=int, default=50)
 
-    # TRAINING PARAMETERS
+    add_arg('--max_timesteps', type=int, default=12)        # max timesteps in one rollout
+
     add_arg('--solved_reward', type=float, default=100)     # stop training if avg_reward > solved_reward
     add_arg('--max_episodes', type=int, default=50000)      # max training episodes
-    add_arg('--max_timesteps', type=int, default=12)        # max timesteps in one episode
     add_arg('--update_timesteps', type=int, default=200)    # min timesteps in one update
     add_arg('--actor_epochs', type=int, default=30)         # actor epochs in one update
     add_arg('--critic_epochs', type=int, default=40)        # critic epochs in one update
@@ -88,6 +89,7 @@ def read_args():
 
     return parser.parse_args()
 
+
 if __name__ == '__main__':
     args = read_args()
     print("====args====\n", args)
@@ -115,7 +117,8 @@ if __name__ == '__main__':
     args.embed_state = embed_state
 
     # Environment
-    env = CReM_Env(args.data_path, args.warm_start_dataset, mode='mol')
+    env = CReM_Env(args.data_path, args.warm_start_dataset, 
+        max_timesteps=args.max_timesteps, mode='mol')
     #ob, _, _ = env.reset(return_type='pyg')
     #assert ob.x.shape[1] == args.input_size
 
