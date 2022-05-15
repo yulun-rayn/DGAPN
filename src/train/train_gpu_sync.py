@@ -7,9 +7,6 @@ from rdkit import Chem
 from collections import deque, OrderedDict
 from copy import deepcopy
 
-import time
-from datetime import datetime
-
 import torch
 import multiprocessing as mp
 from torch.utils.tensorboard import SummaryWriter
@@ -18,7 +15,7 @@ from dgapn.DGAPN import DGAPN, save_DGAPN
 
 from reward.get_reward import get_reward
 
-from utils.general_utils import initialize_logger, close_logger, deque_to_csv
+from utils.general_utils import close_logger, deque_to_csv
 from utils.graph_utils import mols_to_pyg_batch
 from utils.rl_utils import Memory, Log, Scheduler
 
@@ -57,7 +54,7 @@ class Sampler(mp.Process):
             next_task = self.task_queue.get()
             if next_task == None:
                 # Poison pill means shutdown
-                print('\n%s: Exiting' % proc_name)
+                print('\n%s: Exiting ' % proc_name)
                 self.task_queue.task_done()
                 break
 
@@ -69,10 +66,10 @@ class Sampler(mp.Process):
             # print('%s: Working' % proc_name)
             if done:
                 self.timestep_count = 0
-                state, candidates, done = self.env.reset(return_type='smiles')
+                state, candidates, done = self.env.reset(reset_timestep=False, return_type='smiles')
             else:
                 self.timestep_count += 1
-                state, candidates, done = self.env.reset(state, return_type='smiles')
+                state, candidates, done = self.env.reset(state, reset_timestep=False, return_type='smiles')
                 if self.timestep_count >= self.max_timesteps:
                     done = True
 
@@ -107,20 +104,12 @@ class Result(object):
 #                   TRAINING LOOP                   #
 #####################################################
 
-def train_gpu_sync(args, env, model):
+def train_gpu_sync(args, env, model, writer=None, save_dir=None):
     # initiate subprocesses
     print('Creating %d processes' % args.nb_procs)
     workers = [Sampler(env, tasks, results, args.max_timesteps) for i in range(args.nb_procs)]
     for w in workers:
         w.start()
-
-    # logging variables
-    dt = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    writer = SummaryWriter(log_dir=os.path.join(args.artifact_path, 'runs/' + args.name + '_' + dt))
-    save_dir = os.path.join(args.artifact_path, 'saves/' + args.name + '_' + dt)
-    os.makedirs(save_dir, exist_ok=True)
-    initialize_logger(save_dir)
-    logging.info(model)
 
     sample_count = 0
     episode_count = 0
@@ -142,7 +131,7 @@ def train_gpu_sync(args, env, model):
     # training loop
     i_episode = 0
     while i_episode < args.max_episodes:
-        logging.info("\n\ncollecting rollouts")
+        logging.info("\n\nCollecting rollouts")
         for i in range(args.nb_procs):
             tasks.put((i, None, True))
         tasks.join()
@@ -227,8 +216,10 @@ def train_gpu_sync(args, env, model):
                 rewbuffer_env.append(main_reward)
                 molbuffer_env.append((states[idx], main_reward))
 
-                writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
-                writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
+                if writer is not None:
+                    # write to Tensorboard
+                    writer.add_scalar("EpMainRew", main_reward, i_episode - 1)
+                    writer.add_scalar("EpRewEnvMean", np.mean(rewbuffer_env), i_episode - 1)
 
                 memories[idx].rewards.append(weighted_main_reward)
                 memories[idx].terminals.append(True)
@@ -266,7 +257,7 @@ def train_gpu_sync(args, env, model):
             m.clear()
 
         # update model
-        logging.info("\nupdating model @ episode %d..." % i_episode)
+        logging.info("\nUpdating model @ episode %d..." % i_episode)
         model.update(memory)
         memory.clear()
         update_count += 1
@@ -274,23 +265,22 @@ def train_gpu_sync(args, env, model):
         save_counter += episode_count
         log_counter += episode_count
 
-        # stop training if avg_reward > solved_reward
-        if np.mean(rewbuffer_env) > args.solved_reward:
-            logging.info("########## Solved! ##########")
-            save_DGAPN(model, os.path.join(save_dir, 'DGAPN_continuous_solved_{}.pt'.format('test')))
-            break
+        if save_dir is not None:
+            # save if solved
+            if np.mean(rewbuffer_env) > args.solved_reward:
+                save_DGAPN(model, os.path.join(save_dir, 'solved_dgapn.pt'))
 
-        # save every save_interval episodes
-        if save_counter >= args.save_interval:
-            save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
-            deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
-            save_counter = 0
+            # save every save_interval episodes
+            if save_counter >= args.save_interval:
+                save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
+                deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
+                save_counter = 0
 
-        # save running model
-        save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
+            # save running model
+            save_DGAPN(model, os.path.join(save_dir, 'running_dgapn.pt'))
 
         if log_counter >= args.log_interval:
-            logging.info('Episode {} \t Avg length: {} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
+            logging.info('Episode {} \t Avg length: {:4.2f} \t Avg reward: {:5.3f} \t Avg main reward: {:5.3f}'.format(
                 i_episode, running_length/log_counter, running_reward/log_counter, running_main_reward/log_counter))
 
             running_length = 0
@@ -300,6 +290,11 @@ def train_gpu_sync(args, env, model):
 
         episode_count = 0
         sample_count = 0
+
+        # stop training if average main reward > solved_reward
+        if np.mean(rewbuffer_env) > args.solved_reward:
+            logging.info("########## Solved! ##########")
+            break
 
     close_logger()
     writer.close()
