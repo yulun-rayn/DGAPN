@@ -212,11 +212,13 @@ class DGAPN(nn.Module):
 
         old_logprobs = torch.tensor(memory.logprobs).to(self.device)
 
+        old_values = self.policy.get_value(states_next)
+
         # model optimization
         logging.info("Optimizing...")
 
         for i in range(1, self.critic_epochs+1):
-            critic_loss = self.policy.update_critic(states, states_next, rewards, discounts)
+            critic_loss = self.policy.update_critic(states, rewards, discounts, old_values)
             if (i % int(self.critic_epochs/nb_prints)) == 0:
                 logging.info("  {:3d}: Critic Loss: {:7.3f}".format(i, critic_loss))
         advantages = rewards + discounts*self.policy.get_value(states_next) - self.policy.get_value(states)

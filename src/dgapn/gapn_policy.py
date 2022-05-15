@@ -106,8 +106,8 @@ class ActorCriticGAPN(nn.Module):
 
         return loss.item()
 
-    def update_critic(self, states, states_next, rewards, discounts):
-        loss = self.critic.loss(states, states_next, rewards, discounts)
+    def update_critic(self, states, rewards, discounts, old_values):
+        loss = self.critic.loss(states, rewards, discounts, old_values)
 
         self.optimizer_critic.zero_grad()
         loss.backward()
@@ -161,9 +161,9 @@ class GAPN_Critic(nn.Module):
             values = self(states)
         return values.detach()
 
-    def loss(self, states, states_next, rewards, discounts):
+    def loss(self, states, rewards, discounts, old_values):
         values = self(states)
-        targets = rewards + discounts * self.get_value(states_next)
+        targets = rewards + discounts * old_values
         loss = self.MseLoss(values, targets)
 
         return loss
