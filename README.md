@@ -18,20 +18,22 @@ git submodule update --init --recursive
 conda config --append channels conda-forge
 conda create -n dgapn-env --file requirements.txt
 conda activate dgapn-env
+
+pip install -e sGAT
 pip install crem==0.2.5
 ```
 
 #### 3. Install Learning Libraries
-- [Pytorch](https://pytorch.org/) [**1.8**.0](https://pytorch.org/get-started/previous-versions/)
-- [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**1.7**.0](https://pytorch-geometric.readthedocs.io/en/1.7.0/notes/installation.html)
+- [Pytorch](https://pytorch.org/) [**1.11**.0](https://pytorch.org/get-started/previous-versions/)
+- [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**2.1**.0](https://pytorch-geometric.readthedocs.io/en/1.7.0/notes/installation.html)
 
   \* *make sure to install the right versions for your toolkit*
 
 #### 4. Install Docking Software (if docking reward is desired)
 
-To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) ([**1.5**.3](https://github.com/ccsb-scripps/AutoDock-GPU/releases)) and [Open Babel](https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html) need to be installed. After installations, change `ADT_PATH` and `OBABEL_PATH` in [the score function](src/reward/adtgpu/get_score.py) to the corresponding executable paths on your system.  Note that as specified by [the requirements](requirements.txt), we used rdkit Version 2021.03.1.
+To evaluate molecular docking scores, the docking program [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU/wiki) [**1.5**.3](https://github.com/ccsb-scripps/AutoDock-GPU/releases) ([guideline](https://github.com/ccsb-scripps/AutoDock-GPU/wiki/Guideline-for-users)) and [Open Babel](https://github.com/openbabel/openbabel/wiki) [**3.1**.1](https://github.com/openbabel/openbabel/releases) ([guideline](https://openbabel.org/docs/current/Installation/install.html)) need to be installed. After installations, change `ADT_PATH` and `OBABEL_PATH` in [the score function](dgapn/reward/adtgpu/get_score.py) to the corresponding executable paths on your system.
 
-[The provided resources](src/reward/adtgpu/receptor) are for docking in the catalytic site of NSP15. If docking against a new protein is desired, several input receptor files need to be generated, see [the sub-directory](src/reward/adtgpu) for more details.
+[The provided resources](dgapn/reward/adtgpu/receptor) are for docking in the catalytic site of NSP15. If docking against a new protein is desired, several input receptor files need to be generated, see [the sub-directory](dgapn/reward/adtgpu) for more details.
 
 
 ## Training
@@ -42,9 +44,9 @@ Once the conda environment is set up, the function call to train the DGAPN is:
 ./main_train.sh &
 ```
 
-A list of flags may be found in `main_train.sh` and `src/main_train.py` for experimentation with different network and training parameters (`--reward_type dock` only if docking software has been set up; different `--run_id` if multiple docking tasks are running at the same time). The run log, models and generated molecules are saved under `*artifact_path*/saves`; the tensorboard log is saved under `*artifact_path*/runs`.
+A list of flags may be found in `main_train.sh` and `main_train.py` for experimentation with different network and training parameters (`--reward_type dock` only if docking software has been set up; different `--run_id` for each task if multiple docking tasks are running at the same time). The run log, models and generated molecules are saved under `*artifact_path*/saves`; the tensorboard log is saved under `*artifact_path*/runs`.
 
-If you wish to produce a pre-trained graph embedding model for DGAPN training, or just want to try out supervised learning with sGAT, check out `src/gnn_embed` for the submodule instructions (installation steps can be skipped if a DGAPN environment is already established).
+If you wish to produce a pre-trained graph embedding model for DGAPN training, or just want to try out supervised learning with spatial graph attention network, check out `sGAT` for the submodule instructions (installation steps can be skipped if a DGAPN environment is already established).
 
 
 ## Evaluation
