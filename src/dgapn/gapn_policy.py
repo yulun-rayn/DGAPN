@@ -8,39 +8,23 @@ import torch_geometric as pyg
 
 from gnn_embed import sGAT
 
-from utils.graph_utils import get_batch_shift
+from utils.graph_utils import reset_batch_index, get_batch_shift
 
 #####################################################
 #                 BATCHED OPERATIONS                #
 #####################################################
-EPS = 1e-4
 
 def batched_expand(emb, batch):
-    unique = torch.flip(torch.unique(batch.cpu(), sorted=False).to(batch.device),
-                        dims=(0,)) # temp fix due to torch.unique bug
-
-    X = torch.repeat_interleave(emb, torch.bincount(batch)[unique], dim=0)
-    return X
+    return torch.repeat_interleave(emb, torch.bincount(batch), dim=0)
 
 def batched_softmax(logits, batch):
-    logit_max = pyg.nn.global_max_pool(logits, batch)
-    logit_max = torch.index_select(logit_max, 0, batch)
+    return pyg.utils.softmax(logits, batch)
 
-    logits = logits - logit_max
-    logits = torch.exp(logits)
-
-    logit_sum = pyg.nn.global_add_pool(logits, batch) + EPS
-    logit_sum = torch.index_select(logit_sum, 0, batch)
-    probs = torch.div(logits, logit_sum)
-    return probs
-
-def batched_sample(probs, batch):
-    unique = torch.flip(torch.unique(batch.cpu(), sorted=False).to(batch.device),
-                        dims=(0,)) # temp fix due to torch.unique bug
-    mask = batch.unsqueeze(0) == unique.unsqueeze(1)
+def batched_sample(probs, batch, eps=1e-4):
+    mask = batch.unsqueeze(0) == torch.unique(batch).unsqueeze(1)
 
     p = probs * mask
-    m = Categorical(p * (p > EPS))
+    m = Categorical(p * (p > eps))
     a = m.sample()
     return a
 
@@ -241,6 +225,7 @@ class GAPN_Actor(nn.Module):
         Q = self.Q_final_layer(Q)
         K = self.K_final_layer(K)
 
+        batch_idx = reset_batch_index(batch_idx)
         Q = batched_expand(Q, batch_idx)
         logits = torch.cat([Q, K], dim=-1)
         for l in self.final_layers:
@@ -276,6 +261,7 @@ class GAPN_Actor(nn.Module):
         Q = self.Q_final_layer(Q)
         K = self.K_final_layer(K)
 
+        batch_idx = reset_batch_index(batch_idx)
         Q = batched_expand(Q, batch_idx)
         logits = torch.cat([Q, K], dim=-1)
         for l in self.final_layers:

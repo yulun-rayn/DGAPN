@@ -126,12 +126,12 @@ def mols_to_pyg_batch(mols, idm=False, ratio=2., device=None):
         mols = [mols]
     graphs = [mol_to_pyg_graph(mol, idm, ratio) for mol in mols]
 
-    g1 = Batch().from_data_list([graph[0] for graph in graphs])
+    g1 = Batch.from_data_list([graph[0] for graph in graphs])
     if device is not None:
         g1 = g1.to(device)
 
     if idm:
-        g2 = Batch().from_data_list([graph[1] for graph in graphs]).to(device)
+        g2 = Batch.from_data_list([graph[1] for graph in graphs]).to(device)
         if device is not None:
             g2 = g2.to(device)
     else:
@@ -196,9 +196,16 @@ def state_to_pyg(atoms, bonds):
         raise TypeError("Mol is None.")
     return mol_to_pyg_graph(mol)
 
-def get_batch_shift(pyg_batch):
-    unique = torch.flip(torch.unique(pyg_batch.cpu(), sorted=False).to(pyg_batch.device), dims=(0,)) # temp fix due to torch.unique bug
-    batch_num_nodes = torch.bincount(pyg_batch)
+def reset_batch_index(batch_idx):
+    unique = torch.flip(torch.unique(batch_idx.cpu(), sorted=False).to(batch_idx.device),
+                        dims=(0,)) # torch.unique(..., sorted=False) does not preserve order
+
+    return (batch_idx.view(-1,1) == unique).int().argmax(dim=1)
+
+def get_batch_shift(batch_idx):
+    unique = torch.flip(torch.unique(batch_idx.cpu(), sorted=False).to(batch_idx.device),
+                        dims=(0,)) # torch.unique(..., sorted=False) does not preserve order
+    batch_num_nodes = torch.bincount(batch_idx)
     batch_num_nodes = batch_num_nodes[unique]
 
     # shift batch

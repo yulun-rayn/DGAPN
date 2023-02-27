@@ -10,11 +10,8 @@ from rdkit.Chem import AllChem
 ########## Executable paths ##########
 
 # For exaLearn systems
-OBABEL_PATH = "/usr/bin/obabel"
-ADT_PATH = "/clusterfs/csdata/pkg/autodock-gpu-153/AutoDock-GPU/bin/autodock_gpu_64wi"
-# For Summit systems
-#OBABEL_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/manesh/BIN/openbabel/summit/build/bin/obabel"
-#ADT_PATH = "/gpfs/alpine/syb105/proj-shared/Personal/gabrielgaz/Apps/summit/autoDockGPU2/bin/autodock_gpu_64wi"
+OBABEL_PATH = "~/Tools/bin/obabel"
+ADT_PATH = "~/Tools/bin/autodock_gpu_128wi"
 
 ########### Receptor Files ###########
 

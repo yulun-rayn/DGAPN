@@ -1,4 +1,5 @@
 import os
+import gym
 import logging
 import argparse
 import resource
@@ -54,7 +55,7 @@ def read_args():
 
     add_arg('--solved_reward', type=float, default=100)     # stop training if avg_reward > solved_reward
     add_arg('--max_episodes', type=int, default=50000)      # max training episodes
-    add_arg('--update_timesteps', type=int, default=200)    # min timesteps in one update
+    add_arg('--update_timesteps', type=int, default=150)    # min timesteps in one update
     add_arg('--k_epochs', type=int, default=30)             # epochs in one update
     add_arg('--eps_clip', type=float, default=0.2)          # clip parameter for PPO
     add_arg('--gamma', type=float, default=0.99)            # discount factor

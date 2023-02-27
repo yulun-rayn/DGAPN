@@ -141,6 +141,7 @@ class DGAPN(nn.Module):
             self.emb_model.to_device(device, n_layers=self.emb_nb_inherit)
         self.policy.to(device)
         self.explore_critic.to(device)
+
         self.device = device
 
     def forward(self):
@@ -194,11 +195,11 @@ class DGAPN(nn.Module):
         batch_idx = torch.LongTensor(batch_idx).to(self.device)
 
         # memory lists to tensors
-        states = [Batch().from_data_list([state[i] for state in memory.states]).to(self.device) 
+        states = [Batch.from_data_list([state[i] for state in memory.states]).to(self.device) 
                     for i in range(1+self.use_3d)]
-        states_next = [Batch().from_data_list([state_next[i] for state_next in memory.states_next]).to(self.device) 
+        states_next = [Batch.from_data_list([state_next[i] for state_next in memory.states_next]).to(self.device) 
                     for i in range(1+self.use_3d)]
-        candidates = [Batch().from_data_list([item[i] for sublist in memory.candidates for item in sublist]).to(self.device)
+        candidates = [Batch.from_data_list([item[i] for sublist in memory.candidates for item in sublist]).to(self.device)
                         for i in range(1+self.use_3d)]
         actions = torch.tensor(memory.actions).to(self.device)
 

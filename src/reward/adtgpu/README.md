@@ -16,9 +16,10 @@ Our pipeline achieves high-throughput processing by taking advantage of the perf
 -   AutoGrid4 (http://autodock.scripps.edu/wiki/AutoGrid)
 
 #### 2.  Install the software for molecular docking on Linux compute server
+
 -   RDKit (https://www.rdkit.org/)
 
--   Open Babel (https://open-babel.readthedocs.io/en/latest/Command-line_tools/babel.html)
+-   Open Babel (http://openbabel.org/wiki/Main_Page)
 
 -   AutoDock-GPU (https://github.com/ccsb-scripps/AutoDock-GPU/wiki)
     > needs to be installed on a compute server with GPUs
