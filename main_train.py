@@ -91,7 +91,7 @@ def read_args():
     # AUTODOCK PARAMETERS
     add_arg('--adt_path', default='')
     add_arg('--obabel_path', default='')
-    add_arg('--receptor_file', default='')
+    add_arg('--receptor_path', default='')
 
     return parser.parse_args()
 

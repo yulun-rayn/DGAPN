@@ -262,6 +262,9 @@ def train_gpu_sync(args, env, model, writer=None, save_dir=None):
         memory.clear()
         update_count += 1
 
+        deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'), mode='a')
+        molbuffer_env.clear()
+
         save_counter += episode_count
         log_counter += episode_count
 
@@ -273,7 +276,6 @@ def train_gpu_sync(args, env, model, writer=None, save_dir=None):
             # save every save_interval episodes
             if save_counter >= args.save_interval:
                 save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
-                deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
                 save_counter = 0
 
             # save running model
