@@ -27,7 +27,7 @@ def get_dock_score(states, args=None):
     #Tmp files to save 
     #  0 for none, 1 for last round, 2 for all
     TMP_SAVE=1
-    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in src/reward/adtgpu/get_score.py.")
+    if (TMP_SAVE==2): print("WARNING: You are set to save all AutoDock-GPU temporary files, for large runs this may be excessive.  To change please alter TMP_SAVE in dgapn/reward/adtgpu/get_score.py.")
 
     is_list = 1
     if not isinstance(states, list):
@@ -45,10 +45,10 @@ def get_dock_score(states, args=None):
     else: obabel_path=OBABEL_PATH
     if(args and args.adt_path!=''): adt_path=args.adt_path
     else: adt_path=ADT_PATH
-    if(args and args.receptor_file!=''): receptor_file="./src/reward/adtgpu/receptor/"+args.receptor_file
-    else: receptor_file="./src/reward/adtgpu/receptor/"+RECEPTOR_FILE
-    if(args and args.run_id!=''): run_dir="./src/reward/adtgpu/autodockgpu"+str(args.run_id)
-    else: run_dir="./src/reward/adtgpu/autodockgpu"
+    if(args and args.receptor_file!=''): receptor_file="./dgapn/reward/adtgpu/receptor/"+args.receptor_file
+    else: receptor_file="./dgapn/reward/adtgpu/receptor/"+RECEPTOR_FILE
+    if(args and args.run_id!=''): run_dir="./dgapn/reward/adtgpu/autodockgpu"+str(args.run_id)
+    else: run_dir="./dgapn/reward/adtgpu/autodockgpu"
     if(DEBUG): print("adttmp: {}".format(run_dir))
 
     #Check that input file path exist
