@@ -95,6 +95,9 @@ def train_serial(args, env, model, writer=None, save_dir=None):
         model.update(memory)
         memory.clear()
 
+        deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'), mode='a')
+        molbuffer_env.clear()
+
         if save_dir is not None:
             # save if solved
             if np.mean(rewbuffer_env) > args.solved_reward:
@@ -103,7 +106,6 @@ def train_serial(args, env, model, writer=None, save_dir=None):
             # save every save_interval episodes
             if save_counter >= args.save_interval:
                 save_DGAPN(model, os.path.join(save_dir, '{:05d}_dgapn.pt'.format(i_episode)))
-                deque_to_csv(molbuffer_env, os.path.join(save_dir, 'mol_dgapn.csv'))
                 save_counter = 0
 
             # save running model

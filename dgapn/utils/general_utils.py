@@ -50,7 +50,9 @@ def load_model(artifact_path, model_url, model_path, name='model'):
     state = torch.load(model_path)
     return state
 
-def deque_to_csv(que, save_path):
-    with open(save_path, "w", newline="") as f:
+def deque_to_csv(que, save_path, mode='w'):
+    with open(save_path, mode, newline="") as f:
         writer = csv.writer(f)
+        if mode == 'a':
+            writer.writerow('')
         writer.writerows(que)
