@@ -25,7 +25,7 @@ pip install crem==0.2.5
 
 #### 3. Install Learning Libraries
 - [Pytorch](https://pytorch.org/) [**1.11**.0](https://pytorch.org/get-started/previous-versions/)
-- [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**2.1**.0](https://pytorch-geometric.readthedocs.io/en/1.7.0/notes/installation.html)
+- [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**2.1**.0](https://pytorch-geometric.readthedocs.io/en/2.1.0/notes/installation.html)
 
   \* *make sure to install the right versions for your toolkit*
 
