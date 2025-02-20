@@ -1,7 +1,17 @@
 # Distilled Graph Attention Policy Network
-![](figure/DGAPN.png)
 
 This repository is the official implementation of Distilled Graph Attention Policy Network (DGAPN) in the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](http://arxiv.org/abs/2106.02190) (matching branch `iclr`). The implementation of Spatial Graph Attention Network (sGAT) submodule can be found [here](https://github.com/yulun-rayn/sGAT).
+
+![](figure/DGAPN.png)
+
+```BiBTeX
+@article{wu2021spatial,
+  title={Spatial graph attention and curiosity-driven policy for antiviral drug discovery},
+  author={Wu, Yulun and Cashman, Mikaela and Choma, Nicholas and Prates, Erica T and Vergara, Ver{\'o}nica G Melesse and Shah, Manesh and Chen, Andrew and Clyde, Austin and Brettin, Thomas S and de Jong, Wibe A and others},
+  journal={International Conference on Learning Representations},
+  year={2022}
+}
+```
 
 
 ## Requirements
