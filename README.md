@@ -5,10 +5,10 @@ This repository is the official implementation of Distilled Graph Attention Poli
 ![](figure/DGAPN.png)
 
 ```BiBTeX
-@article{wu2021spatial,
-  title={Spatial graph attention and curiosity-driven policy for antiviral drug discovery},
-  author={Wu, Yulun and Cashman, Mikaela and Choma, Nicholas and Prates, Erica T and Vergara, Ver{\'o}nica G Melesse and Shah, Manesh and Chen, Andrew and Clyde, Austin and Brettin, Thomas S and de Jong, Wibe A and others},
-  journal={International Conference on Learning Representations},
+@inproceedings{wuspatial,
+  title={Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery},
+  author={Wu, Yulun and Choma, Nicholas and Chen, Andrew Deru and Cashman, Mikaela and Prates, Erica Teixeira and Vergara, Veronica G Melesse and Shah, Manesh B and Clyde, Austin and Brettin, Thomas and de Jong, Wibe Albert and others},
+  booktitle={International Conference on Learning Representations},
   year={2022}
 }
 ```
